@@ -218,4 +218,252 @@ document.addEventListener("DOMContentLoaded", function() {
     addStyles();
     loadAnnouncements();
 });
+// ============ GALLERY MANAGEMENT ============
+const GALLERY_BIN_ID = 'YOUR_GALLERY_BIN_ID'; // Create a new bin for gallery
+const ADMIN_PASSWORD = 'admin123'; // Same password
+
+let selectedImageFile = null;
+
+// Load gallery images
+async function loadGallery() {
+    const container = document.getElementById("gallery-container");
+    if (!container) return;
+    
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
+            headers: { 'X-Master-Key': MASTER_KEY }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load gallery');
+        
+        const data = await response.json();
+        const images = data.record.images || [];
+        
+        displayGallery(images);
+        displayImageList(images); // For admin panel
+        
+    } catch (error) {
+        console.error('Error loading gallery:', error);
+        container.innerHTML = "<p>Error loading gallery.</p>";
+    }
+}
+
+// Display gallery for public view
+function displayGallery(images) {
+    const container = document.getElementById("gallery-container");
+    if (!container) return;
+    
+    container.innerHTML = "";
+    
+    if (images.length === 0) {
+        container.innerHTML = "<p>No images in gallery yet.</p>";
+        return;
+    }
+    
+    images.forEach(image => {
+        const div = document.createElement("div");
+        div.className = "gallery-image";
+        div.innerHTML = `
+            <img src="${image.data}" alt="${image.caption || 'Gallery image'}">
+            ${image.caption ? `<div class="caption">${image.caption}</div>` : ''}
+        `;
+        container.appendChild(div);
+    });
+}
+
+// Display image list in admin panel
+function displayImageList(images) {
+    const list = document.getElementById("image-list");
+    if (!list) return;
+    
+    list.innerHTML = "";
+    
+    if (images.length === 0) {
+        list.innerHTML = "<p>No images uploaded yet.</p>";
+        return;
+    }
+    
+    images.forEach((image, index) => {
+        const div = document.createElement("div");
+        div.className = "image-item";
+        div.onclick = () => deleteImage(index);
+        div.innerHTML = `
+            <img src="${image.data}" alt="${image.caption || 'Image'}">
+            ${image.caption ? `<div class="caption">${image.caption}</div>` : ''}
+            <div class="delete-overlay">🗑️ Click to delete</div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+// Preview image before upload
+function previewImage(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById("imagePreview");
+    const uploadBtn = document.getElementById("uploadBtn");
+    
+    if (file) {
+        // Check file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showGalleryMessage("❌ Image too large! Max 5MB", "error");
+            return;
+        }
+        
+        // Check file type
+        if (!file.type.startsWith('image/')) {
+            showGalleryMessage("❌ Please select an image file", "error");
+            return;
+        }
+        
+        selectedImageFile = file;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+        };
+        reader.readAsDataURL(file);
+        
+        uploadBtn.disabled = false;
+    }
+}
+
+// Upload image
+async function uploadImage() {
+    const password = document.getElementById("galleryAdminPass").value;
+    const caption = document.getElementById("imageCaption").value;
+    const messageEl = document.getElementById("galleryMessage");
+    
+    // Check password
+    if (password !== ADMIN_PASSWORD) {
+        showGalleryMessage("❌ Incorrect password!", "error");
+        return;
+    }
+    
+    // Check if image selected
+    if (!selectedImageFile) {
+        showGalleryMessage("❌ Please select an image first!", "error");
+        return;
+    }
+    
+    try {
+        showGalleryMessage("⏳ Uploading...", "info");
+        
+        // Convert image to base64
+        const reader = new FileReader();
+        reader.readAsDataURL(selectedImageFile);
+        
+        reader.onloadend = async function() {
+            const base64Image = reader.result;
+            
+            // Get current images
+            const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
+                headers: { 'X-Master-Key': MASTER_KEY }
+            });
+            
+            const data = await getRes.json();
+            const images = data.record.images || [];
+            
+            // Add new image
+            images.unshift({
+                data: base64Image,
+                caption: caption.trim(),
+                date: new Date().toLocaleString()
+            });
+            
+            // Save to JSONBin
+            const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': MASTER_KEY
+                },
+                body: JSON.stringify({ images: images })
+            });
+            
+            if (putRes.ok) {
+                // Clear form
+                document.getElementById("imageUpload").value = "";
+                document.getElementById("imageCaption").value = "";
+                document.getElementById("imagePreview").innerHTML = "";
+                selectedImageFile = null;
+                document.getElementById("uploadBtn").disabled = true;
+                document.getElementById("galleryAdminPass").value = "";
+                
+                showGalleryMessage("✅ Image uploaded successfully!", "success");
+                
+                // Reload gallery
+                loadGallery();
+                
+                setTimeout(() => {
+                    document.getElementById("galleryMessage").innerHTML = "";
+                }, 3000);
+            }
+        };
+        
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        showGalleryMessage("❌ Error uploading image", "error");
+    }
+}
+
+// Delete image
+async function deleteImage(index) {
+    const password = document.getElementById("galleryAdminPass").value;
+    const messageEl = document.getElementById("galleryMessage");
+    
+    if (password !== ADMIN_PASSWORD) {
+        showGalleryMessage("❌ Incorrect password! Please enter password first.", "error");
+        return;
+    }
+    
+    if (!confirm("Delete this image?")) return;
+    
+    try {
+        // Get current images
+        const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
+            headers: { 'X-Master-Key': MASTER_KEY }
+        });
+        
+        const data = await getRes.json();
+        const images = data.record.images || [];
+        
+        // Remove image at index
+        images.splice(index, 1);
+        
+        // Save to JSONBin
+        const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': MASTER_KEY
+            },
+            body: JSON.stringify({ images: images })
+        });
+        
+        if (putRes.ok) {
+            showGalleryMessage("✅ Image deleted!", "success");
+            loadGallery();
+            
+            setTimeout(() => {
+                document.getElementById("galleryMessage").innerHTML = "";
+            }, 3000);
+        }
+        
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        showGalleryMessage("❌ Error deleting image", "error");
+    }
+}
+
+// Helper function for gallery messages
+function showGalleryMessage(text, type) {
+    const messageEl = document.getElementById("galleryMessage");
+    messageEl.innerHTML = text;
+    messageEl.style.color = type === 'error' ? '#dc3545' : (type === 'success' ? '#28a745' : '#007bff');
+}
+
+// Initialize gallery
+document.addEventListener("DOMContentLoaded", function() {
+    loadGallery();
+});
 

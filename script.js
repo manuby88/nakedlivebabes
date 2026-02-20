@@ -203,3 +203,23 @@ document.addEventListener("DOMContentLoaded", function () {
     addStyles();
     loadAnnouncements();
 });
+
+// Simple WhatsApp contact form
+function sendToWhatsApp(event) {
+    event.preventDefault();
+    
+    // Get values
+    const name = document.getElementById('fullName').value;
+    const phone = document.getElementById('phoneNumber').value;
+    const date = document.getElementById('date').value;
+    const message = document.getElementById('message').value;
+    
+    // Create message
+    const text = `Name: ${name}%0APhone: ${phone}%0ADate: ${date}%0AMessage: ${message}`;
+    
+    // Send to WhatsApp
+    window.open(`https://wa.me/256784340888?text=${text}`, '_blank');
+    
+    // Reset form
+    event.target.reset();
+}

@@ -495,3 +495,111 @@ footer {
         justify-content: center;
     }
 }
+/* Add to style.css */
+
+/* Audio Announcements Section */
+#audio-announcements {
+    padding: 40px 20px;
+    background: #f9f9f9;
+}
+
+.audio-announcement-item {
+    background: #ffffff;
+    border-left: 4px solid #ff4d4d;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.audio-player {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.audio-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.audio-title {
+    font-weight: bold;
+    color: #333;
+}
+
+.audio-date {
+    color: #666;
+    font-size: 14px;
+}
+
+.audio-controls small {
+    color: #666;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+/* Admin Audio Section */
+.audio-upload-section {
+    background: #e9ecef;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+}
+
+.audio-upload-section h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.audio-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.audio-controls button {
+    flex: 1;
+    min-width: 100px;
+}
+
+#recordBtn {
+    background: #dc3545;
+}
+
+#recordBtn:hover {
+    background: #c82333;
+}
+
+#recordBtn.recording {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+#stopBtn {
+    background: #6c757d;
+}
+
+#playBtn {
+    background: #28a745;
+}
+
+#audioFile {
+    margin: 15px 0;
+    padding: 10px;
+    border: 2px dashed #007bff;
+    border-radius: 5px;
+    width: 100%;
+}
+
+#uploadAudioBtn {
+    background: #007bff;
+    width: 100%;
+}

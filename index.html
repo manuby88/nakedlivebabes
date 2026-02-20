@@ -89,8 +89,14 @@
     <h2>Latest Announcement</h2>
     <p id="announcementDisplay">No announcements yet.</p>
 </section>
-
-
+<!-- ADMIN PANEL -->
+<section class="admin">
+    <h2>Admin – Post Announcement</h2>
+    <input type="password" id="adminPass" placeholder="Enter Password">
+    <textarea id="announcementText" placeholder="Write announcement..."></textarea>
+    <button onclick="addAnnouncement()">Post</button>
+</section>
+    
 <!-- CONTACT -->
 <section id="contact">
     <h2>Contact Us</h2>
@@ -102,15 +108,6 @@
         <button type="submit">Send Message</button>
     </form>
 </section>
-
-<!-- ADMIN PANEL -->
-<section class="admin">
-    <h2>Admin – Post Announcement</h2>
-    <input type="password" id="adminPass" placeholder="Enter Password">
-    <textarea id="announcementText" placeholder="Write announcement..."></textarea>
-    <button onclick="addAnnouncement()">Post</button>
-</section>
-
 <footer>
     © 2026 naked live babes ' CONTACT @ 0706003669 PRIMEWEB FOR SUPPORT' | All Rights Reserved
 </footer>
@@ -145,5 +142,6 @@ fetch("announcements.json")
 <script src="script.js"></script>
 </body>
 </html>
+
 
 

@@ -117,31 +117,35 @@
    💬
 </a>
 <script>
-fetch("announcements.json")
-  .then(response => response.json())
-  .then(data => {
-      const container = document.getElementById("announcementContainer");
+document.addEventListener("DOMContentLoaded", function () {
+  const container = document.getElementById("announcementContainer");
+  if (!container) return;
+
+  fetch("announcements.json")
+    .then(response => response.json())
+    .then(data => {
       container.innerHTML = "";
 
-      data.reverse().forEach(item => {
-          const div = document.createElement("div");
-          div.innerHTML = `
-              <h3>${item.title}</h3>
-              <p>${item.message}</p>
-              <small>${item.date}</small>
-              <hr>
-          `;
-          container.appendChild(div);
+      data.slice().reverse().forEach(item => {
+        const div = document.createElement("div");
+        div.style.marginBottom = "20px";
+        div.innerHTML = `
+          <h3>${item.title}</h3>
+          <p>${item.message}</p>
+          <small>${item.date}</small>
+        `;
+        container.appendChild(div);
       });
-  })
-  .catch(error => console.error("Error loading announcements:", error));
+    })
+    .catch(error => console.error("Error loading announcements:", error));
+});
 </script>
-
 
 
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
 

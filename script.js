@@ -219,8 +219,10 @@ document.addEventListener("DOMContentLoaded", function() {
     loadAnnouncements();
 });
 // ============ GALLERY MANAGEMENT ============
-const GALLERY_BIN_ID = '6998865f43b1c97be98eba4a'; // Create a new bin for gallery
-const ADMIN_PASSWORD = 'kojja emma 2026'; // Same password
+// IMPORTANT: Replace with your actual Gallery Bin ID from step 1
+const GALLERY_BIN_ID = 'YOUR_GALLERY_BIN_ID_HERE'; // <-- CHANGE THIS
+const MASTER_KEY = 'YOUR_MASTER_KEY_HERE'; // Your master key from jsonbin.io
+const ADMIN_PASSWORD = 'admin123';
 
 let selectedImageFile = null;
 
@@ -231,24 +233,28 @@ async function loadGallery() {
     
     try {
         const response = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-            headers: { 'X-Master-Key': MASTER_KEY }
+            headers: { 
+                'X-Master-Key': MASTER_KEY
+            }
         });
         
-        if (!response.ok) throw new Error('Failed to load gallery');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
         const data = await response.json();
         const images = data.record.images || [];
         
         displayGallery(images);
-        displayImageList(images); // For admin panel
+        displayImageList(images);
         
     } catch (error) {
         console.error('Error loading gallery:', error);
-        container.innerHTML = "<p>Error loading gallery.</p>";
+        container.innerHTML = "<p>Error loading gallery. Check console.</p>";
     }
 }
 
-// Display gallery for public view
+// Display gallery for public
 function displayGallery(images) {
     const container = document.getElementById("gallery-container");
     if (!container) return;
@@ -271,7 +277,7 @@ function displayGallery(images) {
     });
 }
 
-// Display image list in admin panel
+// Display images in admin panel
 function displayImageList(images) {
     const list = document.getElementById("image-list");
     if (!list) return;
@@ -302,29 +308,32 @@ function previewImage(event) {
     const preview = document.getElementById("imagePreview");
     const uploadBtn = document.getElementById("uploadBtn");
     
-    if (file) {
-        // Check file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            showGalleryMessage("❌ Image too large! Max 5MB", "error");
-            return;
-        }
-        
-        // Check file type
-        if (!file.type.startsWith('image/')) {
-            showGalleryMessage("❌ Please select an image file", "error");
-            return;
-        }
-        
-        selectedImageFile = file;
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-        };
-        reader.readAsDataURL(file);
-        
-        uploadBtn.disabled = false;
+    if (!file) return;
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showGalleryMessage("❌ Image too large! Max 5MB", "error");
+        event.target.value = "";
+        return;
     }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+        showGalleryMessage("❌ Please select an image file", "error");
+        event.target.value = "";
+        return;
+    }
+    
+    selectedImageFile = file;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100%;">`;
+    };
+    reader.readAsDataURL(file);
+    
+    uploadBtn.disabled = false;
+    showGalleryMessage("✅ Image ready to upload", "success");
 }
 
 // Upload image
@@ -357,8 +366,14 @@ async function uploadImage() {
             
             // Get current images
             const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-                headers: { 'X-Master-Key': MASTER_KEY }
+                headers: { 
+                    'X-Master-Key': MASTER_KEY
+                }
             });
+            
+            if (!getRes.ok) {
+                throw new Error('Failed to fetch current images');
+            }
             
             const data = await getRes.json();
             const images = data.record.images || [];
@@ -385,9 +400,9 @@ async function uploadImage() {
                 document.getElementById("imageUpload").value = "";
                 document.getElementById("imageCaption").value = "";
                 document.getElementById("imagePreview").innerHTML = "";
-                selectedImageFile = null;
                 document.getElementById("uploadBtn").disabled = true;
                 document.getElementById("galleryAdminPass").value = "";
+                selectedImageFile = null;
                 
                 showGalleryMessage("✅ Image uploaded successfully!", "success");
                 
@@ -397,12 +412,14 @@ async function uploadImage() {
                 setTimeout(() => {
                     document.getElementById("galleryMessage").innerHTML = "";
                 }, 3000);
+            } else {
+                throw new Error('Failed to save');
             }
         };
         
     } catch (error) {
         console.error('Error uploading image:', error);
-        showGalleryMessage("❌ Error uploading image", "error");
+        showGalleryMessage("❌ Error uploading image: " + error.message, "error");
     }
 }
 
@@ -421,8 +438,14 @@ async function deleteImage(index) {
     try {
         // Get current images
         const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-            headers: { 'X-Master-Key': MASTER_KEY }
+            headers: { 
+                'X-Master-Key': MASTER_KEY
+            }
         });
+        
+        if (!getRes.ok) {
+            throw new Error('Failed to fetch images');
+        }
         
         const data = await getRes.json();
         const images = data.record.images || [];
@@ -447,6 +470,8 @@ async function deleteImage(index) {
             setTimeout(() => {
                 document.getElementById("galleryMessage").innerHTML = "";
             }, 3000);
+        } else {
+            throw new Error('Failed to delete');
         }
         
     } catch (error) {
@@ -458,12 +483,16 @@ async function deleteImage(index) {
 // Helper function for gallery messages
 function showGalleryMessage(text, type) {
     const messageEl = document.getElementById("galleryMessage");
+    if (!messageEl) return;
+    
     messageEl.innerHTML = text;
     messageEl.style.color = type === 'error' ? '#dc3545' : (type === 'success' ? '#28a745' : '#007bff');
 }
 
-// Initialize gallery
+// Make sure gallery loads when page loads
 document.addEventListener("DOMContentLoaded", function() {
-    loadGallery();
+    // Only load gallery if the elements exist
+    if (document.getElementById("gallery-container")) {
+        loadGallery();
+    }
 });
-

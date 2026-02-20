@@ -1,0 +1,263 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b0b0f;
+    color: white;
+}
+
+.top-bar {
+    background: #111;
+    text-align: center;
+    padding: 8px;
+    font-size: 14px;
+    color: #ccc;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 40px;
+    background: #0f0f15;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.logo span {
+    color: #e50914;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+nav a {
+    text-decoration: none;
+    color: white;
+}
+
+nav a:hover {
+    color: #e50914;
+}
+
+header {
+    position: relative;
+    height: 90vh;
+    overflow: hidden;
+}
+
+header video {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hero-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+}
+
+.hero-content {
+    position: relative;
+    text-align: center;
+    top: 40%;
+}
+
+.hero-content h1 {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.hero-content p {
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.btn-primary {
+    background: #e50914;
+    padding: 12px 25px;
+    color: white;
+    text-decoration: none;
+    margin-right: 10px;
+}
+
+.btn-secondary {
+    background: #333;
+    padding: 12px 25px;
+    color: white;
+    text-decoration: none;
+}
+
+section {
+    padding: 60px 40px;
+    text-align: center;
+}
+
+h2 {
+    margin-bottom: 30px;
+    color: #e50914;
+}
+.card {
+    position: relative;
+    height: 320px;
+    border-radius: 12px;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: flex-end;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: scale(1.03);
+}
+
+/* Dark overlay */
+.card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        rgba(0,0,0,0.85),
+        rgba(0,0,0,0.4),
+        rgba(0,0,0,0.2)
+    );
+}
+
+/* Text container */
+.card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    max-width: 1100px;
+    margin: auto;
+}
+
+
+.card h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #fff;
+}
+
+.card p {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #ccc;
+}
+
+.card1 {
+    background-image: url('./images/party1.jpg');
+}
+
+.card2 {
+    background-image: url('./images/dancers.jpg');
+}
+
+.card3 {
+    background-image: url('./images/vip.jpg');
+}
+
+.card4 {
+    background-image: url('./images/theme.jpg');
+}
+
+
+
+input, textarea {
+    width: 80%;
+    padding: 10px;
+    margin: 10px 0;
+    background: #1a1a25;
+    border: 1px solid #333;
+    color: white;
+}
+
+button {
+    padding: 10px 20px;
+    background: #e50914;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+#announcement-list {
+    max-width: 700px;
+    margin: auto;
+}
+
+.announcement-item {
+    background: #14141c;
+    padding: 15px;
+    margin: 10px 0;
+    border-left: 4px solid #e50914;
+}
+
+.admin {
+    background: #111;
+}
+
+footer {
+    background: #0f0f15;
+    text-align: center;
+    padding: 20px;
+    font-size: 14px;
+    color: #aaa;
+}
+#gallery {
+    padding: 60px 20px;
+    background: #030202;
+}
+
+.section-title {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 28px;
+}
+
+.gallery-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    max-width: 1100px;
+    margin: auto;
+}
+
+.gallery-container img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+}
+
+.gallery-container img:hover {
+    transform: scale(1.05);
+}
+.whatsapp-float {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #25D366;
+    color: white;
+    font-size: 28px;
+    padding: 15px 18px;
+    border-radius: 50%;
+    text-decoration: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1);
+}

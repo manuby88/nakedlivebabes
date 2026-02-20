@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+    <style>
+        body { font-family: Arial; padding: 40px; }
+        #adminPanel { display: none; }
+        textarea { width: 100%; height: 100px; margin-bottom: 10px; }
+        button { padding: 10px 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<h2>Admin Login</h2>
+
+<input type="password" id="password" placeholder="Enter Admin Password">
+<button onclick="login()">Login</button>
+
+<div id="adminPanel">
+    <h2>Post Announcement</h2>
+    <textarea id="announcementText" placeholder="Write announcement..."></textarea>
+    <button onclick="postAnnouncement()">Post</button>
+</div>
+
+<script>
+    const ADMIN_PASSWORD = "admin123"; // Change this!
+
+    function login() {
+        const input = document.getElementById("password").value;
+        if (input === ADMIN_PASSWORD) {
+            document.getElementById("adminPanel").style.display = "block";
+        } else {
+            alert("Wrong password");
+        }
+    }
+
+    function postAnnouncement() {
+        const text = document.getElementById("announcementText").value;
+        localStorage.setItem("announcement", text);
+        alert("Announcement posted!");
+        document.getElementById("announcementText").value = "";
+    }
+</script>
+
+</body>
+</html>

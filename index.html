@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Naked Live Babes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+    Premium Nightlife & Private Sex House parties
+</div>
+
+<!-- NAVIGATION -->
+<nav>
+    <div class="logo">Naked live Babes <span>UG</span></div>
+    <ul>
+        <li><a href="#">Home</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#events">Events</a></li>
+        <li><a href="#contact">Contact</a></li>
+    </ul>
+</nav>
+
+<!-- HERO SECTION -->
+<header>
+    <video autoplay muted loop>
+        <source src="party.mp4" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+        <h1>Exclusive hook up girls and porn actors</h1>
+        <p>Safe, private and premium experiences for unforgettable nights And  Naked Babes</p>
+        <a href="https://wa.me/256784340888" class="btn-primary">Book via WhatsApp</a>
+        <a href="#contact" class="btn-secondary">Send Inquiry</a>
+    </div>
+</header>
+
+<div class="card-container">
+
+    <div class="card card1">
+        <div class="card-content">
+            <h3>Private Party Hosting</h3>
+            <p>Professional hosts for birthdays and celebrations.</p>
+        </div>
+    </div>
+
+    <div class="card card2">
+        <div class="card-content">
+            <h3>Professional Dancers</h3>
+            <p>High-energy performers for VIP events.</p>
+        </div>
+    </div>
+
+    <div class="card card3">
+        <div class="card-content">
+            <h3>Porn Actor's Vip Experiences</h3>
+            <p>We register and train upcoming porn actor's and actresses</p>
+        </div>
+    </div>
+
+    <div class="card card4">
+        <div class="card-content">
+            <h3>Hot girls available for sex</h3>
+            <p>massage,BJ,fullnight,short sexand more</p>
+        </div>
+    </div>
+
+</div>
+<section id="gallery">
+    <h2 class="section-title">Gallery</h2>
+
+    <div class="gallery-container">
+        <img src="gallery/gallery1.jpg" alt="Gallery Image">
+        <img src="gallery/gallery2.jpg" alt="Gallery Image">
+        <img src="gallery/gallery3.jpg" alt="Gallery Image">
+        <img src="gallery/gallery4.jpg" alt="Gallery Image">
+        <img src="gallery/gallery5.jpg" alt="Gallery Image">
+        <img src="gallery/gallery6.jpg" alt="Gallery Image">
+    </div>
+</section>
+
+
+<!-- ANNOUNCEMENTS -->
+<section id="announcementSection">
+    <h2>Latest Announcement</h2>
+    <p id="announcementDisplay">No announcements yet.</p>
+</section>
+
+
+<!-- CONTACT -->
+<section id="contact">
+    <h2>Contact Us</h2>
+    <form action="mailto:nakedlivebabes@gmail.com" method="post" enctype="text/plain">
+        <input type="text" placeholder="Full Name" required>
+        <input type="tel" placeholder="Phone Number" required>
+        <input type="date" required>
+        <textarea placeholder="Message"></textarea>
+        <button type="submit">Send Message</button>
+    </form>
+</section>
+
+<!-- ADMIN PANEL -->
+<section class="admin">
+    <h2>Admin – Post Announcement</h2>
+    <input type="password" id="adminPass" placeholder="Enter Password">
+    <textarea id="announcementText" placeholder="Write announcement..."></textarea>
+    <button onclick="addAnnouncement()">Post</button>
+</section>
+
+<footer>
+    © 2026 naked live babes ' CONTACT @ 0706003669 PRIMEWEB FOR SUPPORT' | All Rights Reserved
+</footer>
+<a href="https://wa.me/256752451699" 
+   class="whatsapp-float" 
+   target="_blank">
+   💬
+</a>
+<script>
+fetch("announcements.json")
+  .then(response => response.json())
+  .then(data => {
+      const container = document.getElementById("announcementContainer");
+      container.innerHTML = "";
+
+      data.reverse().forEach(item => {
+          const div = document.createElement("div");
+          div.innerHTML = `
+              <h3>${item.title}</h3>
+              <p>${item.message}</p>
+              <small>${item.date}</small>
+              <hr>
+          `;
+          container.appendChild(div);
+      });
+  })
+  .catch(error => console.error("Error loading announcements:", error));
+</script>
+
+
+
+<script src="script.js"></script>
+</body>
+</html>

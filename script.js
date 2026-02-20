@@ -14,14 +14,12 @@ function loadAnnouncements() {
     });
 }
 
-function addAnnouncement() {
-    const pass = document.getElementById("adminPass").value;
-    const text = document.getElementById("announcementText").value;
+function loadAnnouncements() {
+    const container = document.getElementById("announcementContainer");
+    if (!container) return;  // stop if section doesn't exist
 
-    if (pass !== password) {
-        alert("Wrong Password");
-        return;
-    }
+    container.innerHTML = ""; 
+}
 
     if (text.trim() === "") return;
 
@@ -33,4 +31,6 @@ function addAnnouncement() {
     loadAnnouncements();
 }
 
-loadAnnouncements();
+document.addEventListener("DOMContentLoaded", function () {
+    loadAnnouncements();
+});

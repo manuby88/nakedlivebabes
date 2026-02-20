@@ -1,7 +1,20 @@
-// Simple announcement system with JSONBin
-const BIN_ID = '699881a243b1c97be98eaf4d'; // Get from jsonbin.io
-const MASTER_KEY = '$2a$10$pou2wcwJgDl8j9voVqJ2WOsgnMR8PDGAowQOPJqM6kjbKW5sedjRy'; // Get from jsonbin.io
+// ============ CONFIGURATION (ONLY ONCE AT THE TOP) ============
+const BIN_ID = '699881a243b1c97be98eaf4d'; // Your announcement bin
+const GALLERY_BIN_ID = '6998865f43b1c97be98eba4a'; // Your gallery bin
+const MASTER_KEY = '$2a$10$/73BHVkiHDdroKUGU7j2JuqgjESyGWvbXU3iU.piqoZTj4uUA4moi'; // Your master key
 const ADMIN_PASSWORD = 'kojja emma 2026';
+
+// ============ ANNOUNCEMENT FUNCTIONS ============
+// ... your announcement code here ...
+
+// ============ GALLERY FUNCTIONS ============
+let selectedImageFile = null;
+
+async function loadGallery() {
+    // ... gallery code (using MASTER_KEY and GALLERY_BIN_ID from above)
+}
+
+// ... rest of gallery functions
 
 // Load and display announcements
 async function loadAnnouncements() {
@@ -221,7 +234,6 @@ document.addEventListener("DOMContentLoaded", function() {
 // ============ GALLERY MANAGEMENT ============
 // IMPORTANT: Replace with your actual Gallery Bin ID from step 1
 const GALLERY_BIN_ID = '6998865f43b1c97be98eba4a'; // <-- CHANGE THIS
-const MASTER_KEY = '$2a$10$/73BHVkiHDdroKUGU7j2JuqgjESyGWvbXU3iU.piqoZTj4uUA4moi'; // Your master key from jsonbin.io
 const ADMIN_PASSWORD = 'kojja emma 2026';
 
 let selectedImageFile = null;
@@ -496,5 +508,6 @@ document.addEventListener("DOMContentLoaded", function() {
         loadGallery();
     }
 });
+
 
 

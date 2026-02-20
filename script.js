@@ -219,8 +219,8 @@ document.addEventListener("DOMContentLoaded", function() {
     loadAnnouncements();
 });
 // ============ GALLERY MANAGEMENT ============
-const GALLERY_BIN_ID = 'YOUR_GALLERY_BIN_ID'; // Create a new bin for gallery
-const ADMIN_PASSWORD = 'admin123'; // Same password
+const GALLERY_BIN_ID = '6998865f43b1c97be98eba4a'; // Create a new bin for gallery
+const ADMIN_PASSWORD = 'kojja emma 2026'; // Same password
 
 let selectedImageFile = null;
 

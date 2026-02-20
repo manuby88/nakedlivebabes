@@ -1,7 +1,7 @@
 // Simple announcement system with JSONBin
-const BIN_ID = 'YOUR_BIN_ID'; // Get from jsonbin.io
-const MASTER_KEY = 'YOUR_MASTER_KEY'; // Get from jsonbin.io
-const ADMIN_PASSWORD = 'admin123';
+const BIN_ID = '699881a243b1c97be98eaf4d'; // Get from jsonbin.io
+const MASTER_KEY = '$2a$10$pou2wcwJgDl8j9voVqJ2WOsgnMR8PDGAowQOPJqM6kjbKW5sedjRy'; // Get from jsonbin.io
+const ADMIN_PASSWORD = 'kojja emma 2026';
 
 // Load and display announcements
 async function loadAnnouncements() {
@@ -218,3 +218,4 @@ document.addEventListener("DOMContentLoaded", function() {
     addStyles();
     loadAnnouncements();
 });
+

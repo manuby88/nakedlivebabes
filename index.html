@@ -92,13 +92,34 @@
     </div>
 </section>
 
+<!-- AUDIO ANNOUNCEMENTS SECTION -->
+<section id="audio-announcements">
+    <h2>🎤 Audio Announcements</h2>
+    <div id="audio-announcement-list"></div>
+</section>
+
 <!-- ADMIN PANEL - FOR POSTING -->
 <section class="admin-panel">
     <h2>Admin – Post Announcement</h2>
     <input type="password" id="adminPass" placeholder="Enter Password">
-    <textarea id="announcementText" placeholder="Write announcement..."></textarea>
-    <button onclick="checkPasswordAndPost()">Post Announcement</button>
-    <button onclick="clearAnnouncements()" class="clear-btn">Clear All</button>
+    
+    <!-- Text Announcement -->
+    <textarea id="announcementText" placeholder="Write text announcement..."></textarea>
+    <button onclick="postAnnouncement()">📝 Post Text Announcement</button>
+    
+    <!-- Audio Announcement -->
+    <div class="audio-upload-section">
+        <h3>🎤 Record or Upload Audio</h3>
+        <div class="audio-controls">
+            <button onclick="startRecording()" id="recordBtn">⏺️ Start Recording</button>
+            <button onclick="stopRecording()" id="stopBtn" disabled>⏹️ Stop Recording</button>
+            <button onclick="playRecording()" id="playBtn" disabled>▶️ Play</button>
+        </div>
+        <input type="file" id="audioFile" accept="audio/*" onchange="handleAudioUpload(event)">
+        <button onclick="uploadAudio()" id="uploadAudioBtn">📤 Upload Audio</button>
+    </div>
+    
+    <button onclick="clearAnnouncements()" class="clear-btn">🗑️ Clear All</button>
     <div id="adminMessage"></div>
 </section>
     
@@ -156,6 +177,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
 

@@ -223,11 +223,90 @@ function sendToWhatsApp(event) {
     // Reset form
     event.target.reset();
 }
+// ============ TEXT ANNOUNCEMENTS ============
+
+// Post text announcement
+async function postAnnouncement() {
+    const password = document.getElementById("adminPass").value;
+    const message = document.getElementById("announcementText").value;
+    const messageEl = document.getElementById("adminMessage");
+    
+    // Clear previous messages
+    messageEl.textContent = "";
+    messageEl.className = "";
+    
+    // Check if message is empty
+    if (!message.trim()) {
+        showMessage("❌ Please enter an announcement!", "error");
+        return;
+    }
+    
+    // Check password
+    if (password !== ADMIN_PASSWORD) {
+        showMessage("❌ Incorrect password! Try 'admin123'", "error");
+        return;
+    }
+    
+    try {
+        showMessage("⏳ Posting text announcement...", "info");
+        
+        // Get current announcements
+        const getResponse = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+            headers: {
+                'X-Master-Key': MASTER_KEY,
+                'X-Access-Key': API_KEY
+            }
+        });
+        
+        if (!getResponse.ok) {
+            throw new Error('Failed to fetch current announcements');
+        }
+        
+        const data = await getResponse.json();
+        const announcements = data.record.announcements || [];
+        
+        // Add new text announcement at the beginning
+        announcements.unshift({
+            type: 'text',
+            message: message.trim(),
+            date: new Date().toLocaleString()
+        });
+        
+        // Update on JSONBin
+        const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': MASTER_KEY,
+                'X-Access-Key': API_KEY
+            },
+            body: JSON.stringify({ announcements: announcements })
+        });
+        
+        if (!updateResponse.ok) {
+            throw new Error('Failed to save announcement');
+        }
+        
+        // Clear input fields
+        document.getElementById("announcementText").value = "";
+        document.getElementById("adminPass").value = "";
+        
+        showMessage("✅ Text announcement posted successfully!", "success");
+        
+        // Reload announcements
+        await loadAnnouncements();
+        
+    } catch (error) {
+        console.error('Error posting announcement:', error);
+        showMessage("❌ Error posting announcement. Check console.", "error");
+    }
+}
+
 // ============ AUDIO ANNOUNCEMENTS ============
 let mediaRecorder;
 let audioChunks = [];
-let audioBlob;
-let audioUrl;
+let audioBlob = null;
+let audioUrl = null;
 
 // Check if browser supports audio recording
 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -248,7 +327,7 @@ async function startRecording() {
         };
         
         mediaRecorder.onstop = () => {
-            audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             audioUrl = URL.createObjectURL(audioBlob);
             
             // Enable play button
@@ -280,7 +359,9 @@ function stopRecording() {
         mediaRecorder.stop();
         
         // Stop all audio tracks
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        if (mediaRecorder.stream) {
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
         
         // Update button states
         document.getElementById('recordBtn').classList.remove('recording');
@@ -343,6 +424,10 @@ async function uploadAudio() {
                 }
             });
             
+            if (!getResponse.ok) {
+                throw new Error('Failed to fetch current announcements');
+            }
+            
             const data = await getResponse.json();
             const announcements = data.record.announcements || [];
             
@@ -384,7 +469,40 @@ async function uploadAudio() {
     }
 }
 
-// Update the displayAnnouncements function to show audio
+// Load and display announcements
+async function loadAnnouncements() {
+    const list = document.getElementById("announcement-list");
+    const audioList = document.getElementById("audio-announcement-list");
+    
+    if (!list) return;
+    
+    try {
+        list.innerHTML = "<p>Loading announcements...</p>";
+        if (audioList) audioList.innerHTML = "<p>Loading audio announcements...</p>";
+        
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+            headers: {
+                'X-Master-Key': MASTER_KEY,
+                'X-Access-Key': API_KEY
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load announcements');
+        }
+        
+        const data = await response.json();
+        const announcements = data.record.announcements || [];
+        
+        displayAnnouncements(announcements);
+    } catch (error) {
+        console.error('Error loading announcements:', error);
+        list.innerHTML = "<p>Error loading announcements. Please refresh.</p>";
+        if (audioList) audioList.innerHTML = "<p>Error loading audio announcements.</p>";
+    }
+}
+
+// Display announcements in the list
 function displayAnnouncements(announcements) {
     const list = document.getElementById("announcement-list");
     const audioList = document.getElementById("audio-announcement-list");
@@ -396,13 +514,15 @@ function displayAnnouncements(announcements) {
     
     if (announcements.length === 0) {
         list.innerHTML = "<p>No announcements yet.</p>";
+        if (audioList) audioList.innerHTML = "<p>No audio announcements yet.</p>";
         return;
     }
     
     let textCount = 0;
     let audioCount = 0;
     
-    announcements.forEach(item => {
+    // Reverse to show newest first
+    announcements.slice().reverse().forEach(item => {
         if (item.type === 'audio') {
             // Audio announcement
             audioCount++;
@@ -423,7 +543,7 @@ function displayAnnouncements(announcements) {
                     </div>
                 `;
                 div.appendChild(audio);
-                div.innerHTML += `<div class="audio-controls"><small>Size: ${item.duration}</small></div>`;
+                div.innerHTML += `<div class="audio-controls"><small>Size: ${item.duration || 'Unknown'}</small></div>`;
                 
                 audioList.appendChild(div);
             }
@@ -449,19 +569,134 @@ function displayAnnouncements(announcements) {
     }
 }
 
-// Add recording indicator
-function addRecordingStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .recording {
-            animation: pulse 1s infinite;
-            background-color: #ff4444 !important;
+// Clear all announcements
+async function clearAnnouncements() {
+    const password = document.getElementById("adminPass").value;
+    const messageEl = document.getElementById("adminMessage");
+    
+    // Clear previous messages
+    messageEl.textContent = "";
+    messageEl.className = "";
+    
+    // Check password
+    if (password !== ADMIN_PASSWORD) {
+        showMessage("❌ Incorrect password!", "error");
+        return;
+    }
+    
+    if (!confirm("⚠️ Are you sure you want to delete ALL announcements?")) {
+        return;
+    }
+    
+    try {
+        showMessage("⏳ Clearing announcements...", "info");
+        
+        // Update with empty announcements array
+        const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': MASTER_KEY,
+                'X-Access-Key': API_KEY
+            },
+            body: JSON.stringify({ announcements: [] })
+        });
+        
+        if (!updateResponse.ok) {
+            throw new Error('Failed to clear announcements');
         }
         
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { opacity: 1; }
+        // Clear password field
+        document.getElementById("adminPass").value = "";
+        document.getElementById("announcementText").value = "";
+        
+        // Clear audio
+        audioBlob = null;
+        audioUrl = null;
+        document.getElementById('audioFile').value = '';
+        document.getElementById('playBtn').disabled = true;
+        
+        showMessage("✅ All announcements cleared!", "success");
+        
+        // Reload announcements
+        await loadAnnouncements();
+        
+    } catch (error) {
+        console.error('Error clearing announcements:', error);
+        showMessage("❌ Error clearing announcements", "error");
+    }
+}
+
+// Helper function to show messages
+function showMessage(text, type) {
+    const messageEl = document.getElementById("adminMessage");
+    if (!messageEl) return;
+    
+    messageEl.textContent = text;
+    messageEl.className = type;
+    
+    // Auto-hide success/error messages after 5 seconds
+    if (type !== 'info') {
+        setTimeout(() => {
+            if (messageEl.textContent === text) {
+                messageEl.textContent = "";
+                messageEl.className = "";
+            }
+        }, 5000);
+    }
+}
+
+// Add CSS styles
+function addStyles() {
+    // Check if styles already exist
+    if (document.getElementById('announcement-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'announcement-styles';
+    style.textContent = `
+        .announcement-item {
+            background: #ffffff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .announcement-item p {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .announcement-item small {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .audio-announcement-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .audio-announcement-item .audio-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .audio-announcement-item .audio-title {
+            font-weight: bold;
+        }
+        
+        .audio-announcement-item .audio-date {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
         }
         
         .audio-player {
@@ -470,32 +705,148 @@ function addRecordingStyles() {
             border-radius: 30px;
         }
         
-        .audio-announcement-item {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .audio-controls small {
+            color: rgba(255,255,255,0.8);
         }
         
-        .audio-announcement-item .audio-info span {
-            color: white;
+        .admin-panel {
+            background: #f0f0f0;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
         }
         
-        .audio-announcement-item small {
-            color: rgba(255,255,255,0.8) !important;
+        .admin-panel input,
+        .admin-panel textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .admin-panel button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .clear-btn {
+            background: #dc3545 !important;
+        }
+        
+        #adminMessage {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        #adminMessage.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        #adminMessage.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        #adminMessage.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .recording {
+            animation: pulse 1s infinite;
+            background-color: #dc3545 !important;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        .audio-upload-section {
+            background: #e9ecef;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .audio-upload-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .audio-controls button {
+            flex: 1;
+            min-width: 100px;
+        }
+        
+        #recordBtn {
+            background: #dc3545;
+        }
+        
+        #stopBtn {
+            background: #6c757d;
+        }
+        
+        #playBtn {
+            background: #28a745;
+        }
+        
+        #audioFile {
+            margin: 15px 0;
+            padding: 10px;
+            border: 2px dashed #007bff;
+            border-radius: 5px;
+            width: 100%;
+        }
+        
+        #uploadAudioBtn {
+            background: #007bff;
+            width: 100%;
         }
     `;
     document.head.appendChild(style);
 }
 
-// Initialize audio features
+// Initialize everything when page loads
 document.addEventListener("DOMContentLoaded", function () {
     addStyles();
-    addRecordingStyles();
     loadAnnouncements();
     
-    // Check microphone permissions on page load
-    if (navigator.permissions) {
-        navigator.permissions.query({ name: 'microphone' }).then(function(permissionStatus) {
-            console.log('Microphone permission:', permissionStatus.state);
+    // Add event listener for Enter key in password field
+    const passInput = document.getElementById("adminPass");
+    if (passInput) {
+        passInput.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                postAnnouncement();
+            }
+        });
+    }
+    
+    // Add event listener for Enter key in textarea (Ctrl+Enter to post)
+    const textInput = document.getElementById("announcementText");
+    if (textInput) {
+        textInput.addEventListener("keypress", function(e) {
+            if (e.key === "Enter" && e.ctrlKey) {
+                postAnnouncement();
+            }
         });
     }
 });
+

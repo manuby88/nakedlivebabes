@@ -82,6 +82,34 @@
         <img src="gallery/gallery6.jpg" alt="Gallery Image">
     </div>
 </section>
+    <!-- GALLERY SECTION -->
+<section id="gallery">
+    <h2 class="section-title">Gallery</h2>
+    <div class="gallery-container" id="gallery-container">
+        <!-- Images will be loaded here -->
+    </div>
+</section>
+
+<!-- GALLERY ADMIN PANEL -->
+<section class="admin-panel" id="gallery-admin">
+    <h2>📸 Manage Gallery Images</h2>
+    <input type="password" id="galleryAdminPass" placeholder="Enter Password">
+    
+    <div class="image-upload-section">
+        <h3>Upload New Image</h3>
+        <input type="file" id="imageUpload" accept="image/*" onchange="previewImage(event)">
+        <input type="text" id="imageCaption" placeholder="Image caption (optional)">
+        <div id="imagePreview"></div>
+        <button onclick="uploadImage()" id="uploadBtn">📤 Upload Image</button>
+    </div>
+    
+    <div class="current-images">
+        <h3>Current Images (Click to delete)</h3>
+        <div id="image-list" class="image-list"></div>
+    </div>
+    
+    <div id="galleryMessage"></div>
+</section>
  <!-- ANNOUNCEMENTS SECTION - FOR DISPLAY -->
 <section id="announcements">
     <h2>Latest Announcements</h2>
@@ -151,6 +179,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
 

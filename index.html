@@ -84,17 +84,20 @@
 </section>
 
 
-<!-- ANNOUNCEMENTS -->
-<section id="announcementSection">
-    <h2>Latest Announcement</h2>
-    <p id="announcementDisplay">No announcements yet.</p>
+<!-- ANNOUNCEMENTS SECTION - FOR DISPLAY -->
+<section id="announcements">
+    <h2>Latest Announcements</h2>
+    <div id="announcement-list"></div>
 </section>
-<!-- ADMIN PANEL -->
-<section class="admin">
+
+<!-- ADMIN PANEL - FOR POSTING -->
+<section class="admin-panel">
     <h2>Admin – Post Announcement</h2>
     <input type="password" id="adminPass" placeholder="Enter Password">
     <textarea id="announcementText" placeholder="Write announcement..."></textarea>
-    <button onclick="addAnnouncement()">Post</button>
+    <button onclick="checkPasswordAndPost()">Post Announcement</button>
+    <button onclick="clearAnnouncements()" style="background: #dc3545; color: white; margin-left: 10px;">Clear All</button>
+    <p id="adminMessage" style="color: red;"></p>
 </section>
     
 <!-- CONTACT -->
@@ -145,6 +148,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
 

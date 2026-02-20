@@ -87,7 +87,9 @@
 <!-- ANNOUNCEMENTS SECTION - FOR DISPLAY -->
 <section id="announcements">
     <h2>Latest Announcements</h2>
-    <div id="announcement-list"></div>
+    <div id="announcement-list">
+        <p>Loading announcements...</p>
+    </div>
 </section>
 
 <!-- ADMIN PANEL - FOR POSTING -->
@@ -96,8 +98,8 @@
     <input type="password" id="adminPass" placeholder="Enter Password">
     <textarea id="announcementText" placeholder="Write announcement..."></textarea>
     <button onclick="checkPasswordAndPost()">Post Announcement</button>
-    <button onclick="clearAnnouncements()" style="background: #dc3545; color: white; margin-left: 10px;">Clear All</button>
-    <p id="adminMessage" style="color: red;"></p>
+    <button onclick="clearAnnouncements()" class="clear-btn">Clear All</button>
+    <div id="adminMessage"></div>
 </section>
     
 <!-- CONTACT -->
@@ -148,6 +150,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
 

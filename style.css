@@ -378,3 +378,120 @@ footer {
     background: #cce5ff;
     color: #004085;
 }
+/* Add to your style.css */
+
+/* Call Now Button - Floating version similar to WhatsApp */
+.call-float {
+    position: fixed;
+    bottom: 90px;  /* Position above WhatsApp button if you have one */
+    right: 20px;
+    background-color: #34b7f1;  /* Blue color for call */
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 30px;
+    line-height: 60px;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+    z-index: 100;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.call-float:hover {
+    background-color: #2a9fd6;
+    transform: scale(1.1);
+}
+
+/* Adjust WhatsApp button position if you have both */
+.whatsapp-float {
+    bottom: 20px;  /* Move WhatsApp to bottom */
+}
+
+/* Regular Call Now Button for contact section */
+.call-now-button {
+    display: inline-block;
+    background-color: #34b7f1;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    margin: 10px;
+    transition: background 0.3s;
+    border: none;
+    cursor: pointer;
+}
+
+.call-now-button:hover {
+    background-color: #2a9fd6;
+}
+
+/* Contact buttons container */
+.contact-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+/* Style for both buttons */
+.btn-whatsapp {
+    background-color: #25D366;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.3s;
+}
+
+.btn-whatsapp:hover {
+    background-color: #128C7E;
+}
+
+.btn-call {
+    background-color: #34b7f1;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.3s;
+}
+
+.btn-call:hover {
+    background-color: #2a9fd6;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .call-float {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        line-height: 50px;
+        bottom: 80px;
+    }
+    
+    .contact-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-whatsapp, .btn-call {
+        width: 80%;
+        justify-content: center;
+    }
+}

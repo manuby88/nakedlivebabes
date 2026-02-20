@@ -220,9 +220,9 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 // ============ GALLERY MANAGEMENT ============
 // IMPORTANT: Replace with your actual Gallery Bin ID from step 1
-const GALLERY_BIN_ID = 'YOUR_GALLERY_BIN_ID_HERE'; // <-- CHANGE THIS
-const MASTER_KEY = 'YOUR_MASTER_KEY_HERE'; // Your master key from jsonbin.io
-const ADMIN_PASSWORD = 'admin123';
+const GALLERY_BIN_ID = '6998865f43b1c97be98eba4a'; // <-- CHANGE THIS
+const MASTER_KEY = '$2a$10$pou2wcwJgDl8j9voVqJ2WOsgnMR8PDGAowQOPJqM6kjbKW5sedjRy'; // Your master key from jsonbin.io
+const ADMIN_PASSWORD = 'kojja emma 2026';
 
 let selectedImageFile = null;
 
@@ -496,3 +496,4 @@ document.addEventListener("DOMContentLoaded", function() {
         loadGallery();
     }
 });
+

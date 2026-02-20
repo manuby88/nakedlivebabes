@@ -31,7 +31,101 @@ async function loadAnnouncements() {
         list.innerHTML = "<p>Error loading announcements. Please refresh.</p>";
     }
 }
-
+// Post text announcement
+async function postAnnouncement() {
+    console.log("postAnnouncement function called!"); // DEBUG
+    
+    const password = document.getElementById("adminPass").value;
+    const message = document.getElementById("announcementText").value;
+    const messageEl = document.getElementById("adminMessage");
+    
+    console.log("Password:", password); // DEBUG
+    console.log("Message:", message); // DEBUG
+    
+    // Clear previous messages
+    messageEl.textContent = "";
+    messageEl.className = "";
+    
+    // Check if message is empty
+    if (!message.trim()) {
+        console.log("Message is empty"); // DEBUG
+        showMessage("❌ Please enter an announcement!", "error");
+        return;
+    }
+    
+    // Check password
+    if (password !== ADMIN_PASSWORD) {
+        console.log("Wrong password"); // DEBUG
+        showMessage("❌ Incorrect password! Try 'admin123'", "error");
+        return;
+    }
+    
+    console.log("Password correct, proceeding..."); // DEBUG
+    
+    try {
+        showMessage("⏳ Posting text announcement...", "info");
+        
+        // Get current announcements
+        console.log("Fetching from JSONBin..."); // DEBUG
+        const getResponse = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+            headers: {
+                'X-Master-Key': MASTER_KEY,
+                'X-Access-Key': API_KEY
+            }
+        });
+        
+        if (!getResponse.ok) {
+            console.error("Fetch failed:", getResponse.status); // DEBUG
+            throw new Error('Failed to fetch current announcements');
+        }
+        
+        const data = await getResponse.json();
+        console.log("Current data:", data); // DEBUG
+        
+        const announcements = data.record.announcements || [];
+        console.log("Current announcements:", announcements); // DEBUG
+        
+        // Add new text announcement at the beginning
+        announcements.unshift({
+            type: 'text',
+            message: message.trim(),
+            date: new Date().toLocaleString()
+        });
+        
+        console.log("Updated announcements:", announcements); // DEBUG
+        
+        // Update on JSONBin
+        const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': MASTER_KEY,
+                'X-Access-Key': API_KEY
+            },
+            body: JSON.stringify({ announcements: announcements })
+        });
+        
+        console.log("Update response status:", updateResponse.status); // DEBUG
+        
+        if (!updateResponse.ok) {
+            throw new Error('Failed to save announcement');
+        }
+        
+        // Clear input fields
+        document.getElementById("announcementText").value = "";
+        document.getElementById("adminPass").value = "";
+        
+        showMessage("✅ Text announcement posted successfully!", "success");
+        console.log("Announcement posted successfully!"); // DEBUG
+        
+        // Reload announcements
+        await loadAnnouncements();
+        
+    } catch (error) {
+        console.error('Error posting announcement:', error);
+        showMessage("❌ Error posting announcement. Check console.", "error");
+    }
+}
 // Check password and post
 async function checkPasswordAndPost() {
     const password = document.getElementById("adminPass").value;
@@ -849,4 +943,5 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 });
+
 

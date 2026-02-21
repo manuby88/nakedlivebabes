@@ -369,4 +369,62 @@ async function deleteImage(index) {
         alert("❌ Error deleting image. Check console.");
     }
 }
+// Show images in admin with buttons
+function showImageList(images) {
+    const list = document.getElementById("image-list");
+    if (!list) return;
+    
+    list.innerHTML = "";
+    
+    if (images.length === 0) {
+        list.innerHTML = "<p>No images uploaded.</p>";
+        return;
+    }
+    
+    images.forEach((img, index) => {
+        const div = document.createElement("div");
+        div.style.marginBottom = "20px";
+        div.style.border = "1px solid #ddd";
+        div.style.padding = "10px";
+        div.style.borderRadius = "5px";
+        div.style.position = "relative";
+        
+        // Image
+        const imgEl = document.createElement('img');
+        imgEl.src = img.data;
+        imgEl.style.width = "100%";
+        imgEl.style.height = "150px";
+        imgEl.style.objectFit = "cover";
+        imgEl.style.borderRadius = "5px";
+        
+        // Caption
+        if (img.caption) {
+            const cap = document.createElement('p');
+            cap.textContent = img.caption;
+            cap.style.margin = "5px 0";
+            div.appendChild(cap);
+        }
+        
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = "🗑️ Delete Image";
+        deleteBtn.style.backgroundColor = "#dc3545";
+        deleteBtn.style.color = "white";
+        deleteBtn.style.border = "none";
+        deleteBtn.style.padding = "8px 15px";
+        deleteBtn.style.borderRadius = "4px";
+        deleteBtn.style.cursor = "pointer";
+        deleteBtn.style.marginTop = "10px";
+        deleteBtn.style.width = "100%";
+        
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteImage(index);
+        };
+        
+        div.appendChild(imgEl);
+        div.appendChild(deleteBtn);
+        list.appendChild(div);
+    });
+}
 

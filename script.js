@@ -157,15 +157,7 @@ async function loadGallery() {
             container.appendChild(div);
         });
         
-        // Also show in admin if exists
-        showImageList(images);
-        
-    } catch (error) {
-        container.innerHTML = "<p>Error loading gallery.</p>";
-    }
-}
-
-// Show images in admin
+        // Show images in admin with working delete buttons
 function showImageList(images) {
     const list = document.getElementById("image-list");
     if (!list) return;
@@ -180,142 +172,63 @@ function showImageList(images) {
     images.forEach((img, index) => {
         const div = document.createElement("div");
         div.className = "image-item";
+        div.style.position = "relative";
+        div.style.cursor = "pointer";
+        
+        // Create image
+        const imageElement = document.createElement('img');
+        imageElement.src = img.data;
+        imageElement.style.width = "100%";
+        imageElement.style.height = "150px";
+        imageElement.style.objectFit = "cover";
+        imageElement.style.display = "block";
+        
+        // Create delete overlay
+        const overlay = document.createElement('div');
+        overlay.style.position = "absolute";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.right = "0";
+        overlay.style.bottom = "0";
+        overlay.style.backgroundColor = "rgba(220, 53, 69, 0.9)";
+        overlay.style.color = "white";
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+        overlay.style.fontSize = "16px";
+        overlay.style.fontWeight = "bold";
+        overlay.style.opacity = "0";
+        overlay.style.transition = "opacity 0.3s";
+        overlay.style.borderRadius = "8px";
+        overlay.innerHTML = "🗑️ DELETE";
+        
+        // Hover effects
+        div.onmouseenter = () => { overlay.style.opacity = "1"; };
+        div.onmouseleave = () => { overlay.style.opacity = "0"; };
+        
+        // Click to delete
         div.onclick = () => deleteImage(index);
-        div.innerHTML = `
-            <img src="${img.data}" style="width:100%; height:150px; object-fit:cover;">
-            ${img.caption ? `<div class="caption">${img.caption}</div>` : ''}
-            <div style="position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(255,0,0,0.7); color:white; display:flex; align-items:center; justify-content:center; opacity:0; transition:0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">Click to delete</div>
-        `;
+        
+        // Add caption if exists
+        if (img.caption) {
+            const caption = document.createElement('div');
+            caption.className = "caption";
+            caption.style.position = "absolute";
+            caption.style.bottom = "0";
+            caption.style.left = "0";
+            caption.style.right = "0";
+            caption.style.backgroundColor = "rgba(0,0,0,0.7)";
+            caption.style.color = "white";
+            caption.style.padding = "5px";
+            caption.style.fontSize = "12px";
+            caption.style.textAlign = "center";
+            caption.style.zIndex = "1";
+            caption.textContent = img.caption;
+            div.appendChild(caption);
+        }
+        
+        div.appendChild(imageElement);
+        div.appendChild(overlay);
         list.appendChild(div);
     });
 }
-
-// Preview image
-function previewImage(event) {
-    const file = event.target.files[0];
-    const preview = document.getElementById("imagePreview");
-    const uploadBtn = document.getElementById("uploadBtn");
-    
-    if (!file) return;
-    
-    if (file.size > 5 * 1024 * 1024) {
-        alert("Image too large! Max 5MB");
-        return;
-    }
-    
-    selectedImage = file;
-    
-    const reader = new FileReader();
-    reader.onload = e => {
-        preview.innerHTML = `<img src="${e.target.result}" style="max-width:200px;">`;
-    };
-    reader.readAsDataURL(file);
-    
-    uploadBtn.disabled = false;
-}
-
-// Upload image
-async function uploadImage() {
-    const password = document.getElementById("galleryAdminPass").value;
-    const caption = document.getElementById("imageCaption").value;
-    
-    if (password !== ADMIN_PASSWORD) {
-        alert("Wrong password!");
-        return;
-    }
-    
-    if (!selectedImage) {
-        alert("Select an image first!");
-        return;
-    }
-    
-    try {
-        const reader = new FileReader();
-        reader.readAsDataURL(selectedImage);
-        
-        reader.onloadend = async function() {
-            // Get current
-            const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-                headers: { 'X-Master-Key': MASTER_KEY }
-            });
-            
-            const data = await getRes.json();
-            const images = data.record.images || [];
-            
-            // Add new
-            images.unshift({
-                data: reader.result,
-                caption: caption,
-                date: new Date().toLocaleString()
-            });
-            
-            // Save
-            await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': MASTER_KEY
-                },
-                body: JSON.stringify({ images: images })
-            });
-            
-            // Clear
-            document.getElementById("imageUpload").value = "";
-            document.getElementById("imageCaption").value = "";
-            document.getElementById("imagePreview").innerHTML = "";
-            document.getElementById("galleryAdminPass").value = "";
-            selectedImage = null;
-            document.getElementById("uploadBtn").disabled = true;
-            
-            alert("✅ Uploaded!");
-            loadGallery();
-        };
-        
-    } catch (error) {
-        alert("Error uploading");
-    }
-}
-
-// Delete image
-async function deleteImage(index) {
-    const password = document.getElementById("galleryAdminPass").value;
-    
-    if (password !== ADMIN_PASSWORD) {
-        alert("Enter password first!");
-        return;
-    }
-    
-    if (!confirm("Delete?")) return;
-    
-    try {
-        const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-            headers: { 'X-Master-Key': MASTER_KEY }
-        });
-        
-        const data = await getRes.json();
-        const images = data.record.images || [];
-        
-        images.splice(index, 1);
-        
-        await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': MASTER_KEY
-            },
-            body: JSON.stringify({ images: images })
-        });
-        
-        alert("✅ Deleted!");
-        loadGallery();
-        
-    } catch (error) {
-        alert("Error deleting");
-    }
-}
-
-// ============ INITIALIZE ============
-document.addEventListener("DOMContentLoaded", function() {
-    loadAnnouncements();
-    loadGallery();
-});

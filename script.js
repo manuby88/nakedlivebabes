@@ -1,9 +1,37 @@
 // ============ CONFIGURATION ============
-// REPLACE WITH YOUR ACTUAL VALUES
-const MASTER_KEY = '$2a$10$/73BHVkiHDdroKUGU7j2JuqgjESyGWvbXU3iU.piqoZTj4uUA4moi'; // Your master key
+// REPLACE WITH YOUR ACTUAL VALUES FROM JSONBIN.IO
+const MASTER_KEY = '$2a$10$/73BHVkiHDdroKUGU7j2JuqgjESyGWvbXU3iU.piqoZTj4uUA4moi'; // Your actual master key
 const BIN_ID = '699881a243b1c97be98eaf4d'; // Your announcement bin ID
 const GALLERY_BIN_ID = '6998865f43b1c97be98eba4a'; // Your gallery bin ID
 const ADMIN_PASSWORD = 'admin123';
+
+// ============ HELPER FUNCTION FOR FETCH ============
+async function fetchFromJSONBin(binId, method = 'GET', data = null) {
+    const url = `https://api.jsonbin.io/v3/b/${binId}${method === 'GET' ? '/latest' : ''}`;
+    
+    const headers = {
+        'X-Master-Key': MASTER_KEY,
+        'Content-Type': 'application/json',
+        'X-Bin-Meta': 'false' // This returns just the data, not metadata
+    };
+    
+    const options = {
+        method: method,
+        headers: headers
+    };
+    
+    if (data) {
+        options.body = JSON.stringify(data);
+    }
+    
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+}
 
 // ============ ANNOUNCEMENT FUNCTIONS ============
 
@@ -15,19 +43,8 @@ async function loadAnnouncements() {
     try {
         list.innerHTML = "<p>Loading announcements...</p>";
         
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-            headers: { 
-                'X-Master-Key': MASTER_KEY,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const announcements = data.record?.announcements || [];
+        const data = await fetchFromJSONBin(BIN_ID, 'GET');
+        const announcements = data.announcements || [];
         
         list.innerHTML = "";
         
@@ -46,8 +63,8 @@ async function loadAnnouncements() {
             list.appendChild(div);
         });
     } catch (error) {
-        console.error('Error loading announcements:', error);
-        list.innerHTML = "<p>Error loading announcements. Check console.</p>";
+        console.error('Error:', error);
+        list.innerHTML = "<p>Error loading announcements. Check your Master Key and Bin ID.</p>";
     }
 }
 
@@ -73,15 +90,8 @@ async function postAnnouncement() {
     
     try {
         // Get current announcements
-        const getRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-            headers: { 
-                'X-Master-Key': MASTER_KEY,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        const data = await getRes.json();
-        const announcements = data.record?.announcements || [];
+        const data = await fetchFromJSONBin(BIN_ID, 'GET');
+        const announcements = data.announcements || [];
         
         // Add new announcement
         announcements.unshift({
@@ -90,29 +100,20 @@ async function postAnnouncement() {
         });
         
         // Save
-        const putRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': MASTER_KEY
-            },
-            body: JSON.stringify({ announcements: announcements })
-        });
+        await fetchFromJSONBin(BIN_ID, 'PUT', { announcements: announcements });
         
-        if (putRes.ok) {
-            document.getElementById("announcementText").value = "";
-            document.getElementById("adminPass").value = "";
-            msgEl.innerHTML = "✅ Posted successfully!";
-            msgEl.style.color = "green";
-            loadAnnouncements();
-            
-            setTimeout(() => {
-                msgEl.innerHTML = "";
-            }, 3000);
-        }
+        document.getElementById("announcementText").value = "";
+        document.getElementById("adminPass").value = "";
+        msgEl.innerHTML = "✅ Posted successfully!";
+        msgEl.style.color = "green";
+        loadAnnouncements();
+        
+        setTimeout(() => {
+            msgEl.innerHTML = "";
+        }, 3000);
     } catch (error) {
-        console.error('Error posting:', error);
-        msgEl.innerHTML = "❌ Error posting";
+        console.error('Error:', error);
+        msgEl.innerHTML = "❌ Error posting. Check your Master Key.";
         msgEl.style.color = "red";
     }
 }
@@ -131,27 +132,18 @@ async function clearAnnouncements() {
     if (!confirm("Delete all announcements?")) return;
     
     try {
-        const putRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': MASTER_KEY
-            },
-            body: JSON.stringify({ announcements: [] })
-        });
+        await fetchFromJSONBin(BIN_ID, 'PUT', { announcements: [] });
         
-        if (putRes.ok) {
-            msgEl.innerHTML = "✅ All cleared!";
-            msgEl.style.color = "green";
-            document.getElementById("adminPass").value = "";
-            loadAnnouncements();
-            
-            setTimeout(() => {
-                msgEl.innerHTML = "";
-            }, 3000);
-        }
+        msgEl.innerHTML = "✅ All cleared!";
+        msgEl.style.color = "green";
+        document.getElementById("adminPass").value = "";
+        loadAnnouncements();
+        
+        setTimeout(() => {
+            msgEl.innerHTML = "";
+        }, 3000);
     } catch (error) {
-        console.error('Error clearing:', error);
+        console.error('Error:', error);
         msgEl.innerHTML = "❌ Error clearing";
         msgEl.style.color = "red";
     }
@@ -170,21 +162,10 @@ async function loadGallery() {
     try {
         container.innerHTML = "<p>Loading gallery...</p>";
         
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-            headers: { 
-                'X-Master-Key': MASTER_KEY,
-                'Content-Type': 'application/json'
-            }
-        });
+        const data = await fetchFromJSONBin(GALLERY_BIN_ID, 'GET');
+        const images = data.images || [];
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const images = data.record?.images || [];
-        
-        console.log("Loaded images:", images.length); // Debug
+        console.log("Loaded images:", images.length);
         
         // Display in public gallery
         container.innerHTML = "";
@@ -192,7 +173,6 @@ async function loadGallery() {
         if (images.length === 0) {
             container.innerHTML = "<p>No images in gallery yet.</p>";
         } else {
-            // Show all images
             images.forEach((img, index) => {
                 const div = document.createElement("div");
                 div.className = "gallery-image";
@@ -217,7 +197,7 @@ async function loadGallery() {
         
     } catch (error) {
         console.error('Gallery error:', error);
-        container.innerHTML = "<p>Error loading gallery. Check console.</p>";
+        container.innerHTML = "<p>Error loading gallery. Check your Master Key and Gallery Bin ID.</p>";
     }
 }
 
@@ -240,7 +220,6 @@ function displayImageList(images) {
         div.style.padding = "15px";
         div.style.borderRadius = "8px";
         div.style.backgroundColor = "#f9f9f9";
-        div.style.position = "relative";
         
         // Image number
         const number = document.createElement('div');
@@ -308,14 +287,12 @@ function previewImage(event) {
     
     if (!file) return;
     
-    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
         alert("❌ Image too large! Max 5MB");
         event.target.value = "";
         return;
     }
     
-    // Check file type
     if (!file.type.startsWith('image/')) {
         alert("❌ Please select an image file");
         event.target.value = "";
@@ -331,8 +308,6 @@ function previewImage(event) {
     reader.readAsDataURL(file);
     
     uploadBtn.disabled = false;
-    uploadBtn.style.backgroundColor = "#007bff";
-    uploadBtn.style.cursor = "pointer";
 }
 
 // Upload image
@@ -356,60 +331,38 @@ async function uploadImage() {
         
         reader.onloadend = async function() {
             // Get current images
-            const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-                headers: { 
-                    'X-Master-Key': MASTER_KEY,
-                    'Content-Type': 'application/json'
-                }
-            });
+            const data = await fetchFromJSONBin(GALLERY_BIN_ID, 'GET');
+            const images = data.images || [];
             
-            if (!getRes.ok) {
-                throw new Error(`HTTP error! status: ${getRes.status}`);
-            }
+            console.log("Current images:", images.length);
             
-            const data = await getRes.json();
-            const images = data.record?.images || [];
-            
-            console.log("Current images before upload:", images.length);
-            
-            // Add new image to the beginning
+            // Add new image
             images.unshift({
                 data: reader.result,
                 caption: caption,
                 date: new Date().toLocaleString()
             });
             
-            console.log("Images after adding:", images.length);
+            console.log("After adding:", images.length);
             
-            // Save back to JSONBin
-            const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': MASTER_KEY
-                },
-                body: JSON.stringify({ images: images })
-            });
+            // Save
+            await fetchFromJSONBin(GALLERY_BIN_ID, 'PUT', { images: images });
             
-            if (putRes.ok) {
-                // Clear form
-                document.getElementById("imageUpload").value = "";
-                document.getElementById("imageCaption").value = "";
-                document.getElementById("imagePreview").innerHTML = "";
-                document.getElementById("galleryAdminPass").value = "";
-                document.getElementById("uploadBtn").disabled = true;
-                selectedImage = null;
-                
-                alert(`✅ Image uploaded! Total images: ${images.length}`);
-                loadGallery(); // Reload to show all images
-            } else {
-                throw new Error('Failed to save');
-            }
+            // Clear form
+            document.getElementById("imageUpload").value = "";
+            document.getElementById("imageCaption").value = "";
+            document.getElementById("imagePreview").innerHTML = "";
+            document.getElementById("galleryAdminPass").value = "";
+            document.getElementById("uploadBtn").disabled = true;
+            selectedImage = null;
+            
+            alert(`✅ Image uploaded! Total images: ${images.length}`);
+            loadGallery();
         };
         
     } catch (error) {
         console.error('Upload error:', error);
-        alert("❌ Error uploading. Check console.");
+        alert("❌ Error uploading. Check your Master Key.");
     }
 }
 
@@ -426,62 +379,30 @@ async function deleteImage(index) {
     
     try {
         // Get current images
-        const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-            headers: { 
-                'X-Master-Key': MASTER_KEY,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!getRes.ok) {
-            throw new Error(`HTTP error! status: ${getRes.status}`);
-        }
-        
-        const data = await getRes.json();
-        const images = data.record?.images || [];
+        const data = await fetchFromJSONBin(GALLERY_BIN_ID, 'GET');
+        const images = data.images || [];
         
         console.log("Before delete:", images.length);
         
-        // Remove image at index
+        // Remove image
         images.splice(index, 1);
         
         console.log("After delete:", images.length);
         
-        // Save back
-        const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': MASTER_KEY
-            },
-            body: JSON.stringify({ images: images })
-        });
+        // Save
+        await fetchFromJSONBin(GALLERY_BIN_ID, 'PUT', { images: images });
         
-        if (putRes.ok) {
-            alert("✅ Image deleted!");
-            loadGallery(); // Reload both gallery and admin view
-        } else {
-            throw new Error('Failed to save');
-        }
+        alert("✅ Image deleted!");
+        loadGallery();
         
     } catch (error) {
         console.error('Delete error:', error);
-        alert("❌ Error deleting. Check console.");
+        alert("❌ Error deleting. Check your Master Key.");
     }
 }
 
 // ============ INITIALIZE ============
 document.addEventListener("DOMContentLoaded", function() {
-    // Load announcements if element exists
-    if (document.getElementById("announcement-list")) {
-        loadAnnouncements();
-    }
-    
-    // Load gallery if element exists
-    if (document.getElementById("gallery-container")) {
-        loadGallery();
-    }
-    
     // Add CSS styles
     const style = document.createElement('style');
     style.textContent = `
@@ -537,6 +458,17 @@ document.addEventListener("DOMContentLoaded", function() {
             margin: 20px 0;
             border-radius: 8px;
         }
+        #imagePreview {
+            margin: 10px 0;
+        }
     `;
     document.head.appendChild(style);
+    
+    // Load content
+    if (document.getElementById("announcement-list")) {
+        loadAnnouncements();
+    }
+    if (document.getElementById("gallery-container")) {
+        loadGallery();
+    }
 });

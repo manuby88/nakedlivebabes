@@ -2,7 +2,7 @@
 // REPLACE WITH YOUR ACTUAL VALUES FROM JSONBIN.IO
 const MASTER_KEY = '$2a$10$/73BHVkiHDdroKUGU7j2JuqgjESyGWvbXU3iU.piqoZTj4uUA4moi'; // Your actual master key
 const BIN_ID = '699881a243b1c97be98eaf4d'; // Your announcement bin ID
-const GALLERY_BIN_ID = '6998865f43b1c97be98eba4a'; // Your gallery bin ID
+const GALLERY_BIN_ID = '6999333543b1c97be9901e69'; // Your gallery bin ID
 const ADMIN_PASSWORD = 'admin123';
 
 // ============ HELPER FUNCTION FOR FETCH ============
@@ -472,3 +472,4 @@ document.addEventListener("DOMContentLoaded", function() {
         loadGallery();
     }
 });
+

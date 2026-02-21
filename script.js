@@ -320,4 +320,53 @@ document.addEventListener("DOMContentLoaded", function() {
     loadGallery();
 });
 
+// Delete image
+async function deleteImage(index) {
+    const password = document.getElementById("galleryAdminPass").value;
+    
+    if (password !== ADMIN_PASSWORD) {
+        alert("❌ Please enter the admin password first!");
+        return;
+    }
+    
+    if (!confirm("🗑️ Are you sure you want to delete this image?")) return;
+    
+    try {
+        // Get current images
+        const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
+            headers: { 'X-Master-Key': MASTER_KEY }
+        });
+        
+        if (!getRes.ok) {
+            throw new Error('Failed to fetch');
+        }
+        
+        const data = await getRes.json();
+        const images = data.record.images || [];
+        
+        // Remove image at index
+        images.splice(index, 1);
+        
+        // Save back to JSONBin
+        const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': MASTER_KEY
+            },
+            body: JSON.stringify({ images: images })
+        });
+        
+        if (putRes.ok) {
+            alert("✅ Image deleted successfully!");
+            loadGallery(); // Reload both gallery and admin view
+        } else {
+            throw new Error('Failed to save');
+        }
+        
+    } catch (error) {
+        console.error('Delete error:', error);
+        alert("❌ Error deleting image. Check console.");
+    }
+}
 

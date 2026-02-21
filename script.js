@@ -1,8 +1,8 @@
 // ============ CONFIGURATION ============
 // REPLACE THESE WITH YOUR ACTUAL VALUES FROM JSONBIN.IO
 const MASTER_KEY = '$2a$10$/73BHVkiHDdroKUGU7j2JuqgjESyGWvbXU3iU.piqoZTj4uUA4moi';  // Get from jsonbin.io
-const BIN_ID = '699881a243b1c97be98eaf4dE';          // Your announcement bin ID
-const GALLERY_BIN_ID = '6998865f43b1c97be98eba4aE'; // Your gallery bin ID
+const BIN_ID = '699881a243b1c97be98eaf4d';          // Your announcement bin ID
+const GALLERY_BIN_ID = '6998865f43b1c97be98eba4a'; // Your gallery bin ID
 const ADMIN_PASSWORD = 'admin123';
 
 // ============ ANNOUNCEMENT FUNCTIONS ============
@@ -319,4 +319,5 @@ document.addEventListener("DOMContentLoaded", function() {
     loadAnnouncements();
     loadGallery();
 });
+
 

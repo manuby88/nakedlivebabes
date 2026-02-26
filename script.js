@@ -149,89 +149,286 @@ async function clearAnnouncements() {
     }
 }
 
-// ============ GALLERY FUNCTIONS WITH CLOUDINARY ============
-// Add your Cloudinary config
-const CLOUDINARY_CONFIG = {
-    cloudName: 'dljtavfop', // Replace with your cloud name
-    uploadPreset: 'nakedlivebabes', // Create an unsigned upload preset in Cloudinary
-    folder: 'gallery'
-};
-
+// ============ SIMPLE WORKING GALLERY ============
 let selectedImage = null;
 
-// Initialize Cloudinary Upload Widget
-function initCloudinaryWidget() {
-    return cloudinary.createUploadWidget({
-        cloudName: CLOUDINARY_CONFIG.cloudName,
-        uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
-        folder: CLOUDINARY_CONFIG.folder,
-        maxFileSize: 10000000, // 10MB
-        maxImageFileSize: 5000000, // 5MB
-        cropping: true, // Allow cropping
-        croppingAspectRatio: 1.77, // 16:9 aspect ratio
-        showAdvancedOptions: false,
-        sources: ['local', 'url', 'camera'],
-        multiple: false,
-        styles: {
-            palette: {
-                window: "#FFFFFF",
-                windowBorder: "#90A0B3",
-                tabIcon: "#0078FF",
-                menuIcons: "#5A6169",
-                textDark: "#000000",
-                textLight: "#FFFFFF",
-                link: "#0078FF",
-                action: "#FF620C",
-                inactiveTabIcon: "#0E2F5A",
-                error: "#F44235",
-                inProgress: "#0078FF",
-                complete: "#20B832",
-                sourceBg: "#E4EBF1"
+// Load gallery
+async function loadGallery() {
+    const container = document.getElementById("gallery-container");
+    const adminList = document.getElementById("image-list");
+    
+    if (!container) return;
+    
+    try {
+        container.innerHTML = "<p>Loading gallery...</p>";
+        
+        // Fetch from JSONBin
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
+            headers: { 
+                'X-Master-Key': MASTER_KEY,
+                'X-Bin-Meta': 'false'
             }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
+        const data = await response.json();
+        const images = data.images || [];
+        
+        console.log("Loaded images:", images.length);
+        
+        // Show in public gallery
+        displayPublicGallery(images);
+        
+        // Show in admin panel
+        if (adminList) {
+            displayAdminGallery(images);
+        }
+        
+    } catch (error) {
+        console.error('Gallery error:', error);
+        container.innerHTML = "<p>Error loading gallery. Check console.</p>";
+    }
+}
+
+// Display images in public gallery
+function displayPublicGallery(images) {
+    const container = document.getElementById("gallery-container");
+    if (!container) return;
+    
+    container.innerHTML = "";
+    
+    if (images.length === 0) {
+        container.innerHTML = "<p>No images in gallery yet.</p>";
+        return;
+    }
+    
+    // Create grid layout
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+    container.style.gap = '20px';
+    
+    images.forEach((img, index) => {
+        const card = document.createElement('div');
+        card.style.backgroundColor = '#fff';
+        card.style.borderRadius = '8px';
+        card.style.overflow = 'hidden';
+        card.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+        card.style.position = 'relative';
+        
+        // Image
+        const imgElement = document.createElement('img');
+        imgElement.src = img.data; // This is the base64 image
+        imgElement.alt = img.caption || 'Gallery image';
+        imgElement.style.width = '100%';
+        imgElement.style.height = '250px';
+        imgElement.style.objectFit = 'cover';
+        imgElement.style.display = 'block';
+        
+        // Caption
+        if (img.caption) {
+            const caption = document.createElement('div');
+            caption.textContent = img.caption;
+            caption.style.padding = '12px';
+            caption.style.backgroundColor = '#f8f9fa';
+            caption.style.color = '#333';
+            caption.style.fontSize = '14px';
+            caption.style.textAlign = 'center';
+            card.appendChild(caption);
+        }
+        
+        // Date (small)
+        if (img.date) {
+            const date = document.createElement('div');
+            date.textContent = img.date;
+            date.style.padding = '5px 12px 12px';
+            date.style.fontSize = '12px';
+            date.style.color = '#666';
+            date.style.backgroundColor = '#f8f9fa';
+            date.style.borderTop = '1px solid #eee';
+            card.appendChild(date);
+        }
+        
+        card.insertBefore(imgElement, card.firstChild);
+        container.appendChild(card);
     });
 }
 
-// Upload with Cloudinary
-function uploadWithCloudinary() {
+// Display images in admin panel
+function displayAdminGallery(images) {
+    const list = document.getElementById("image-list");
+    if (!list) return;
+    
+    list.innerHTML = "";
+    
+    if (images.length === 0) {
+        list.innerHTML = "<p>No images uploaded yet. Click 'Upload Image' to add some.</p>";
+        return;
+    }
+    
+    images.forEach((img, index) => {
+        const card = document.createElement('div');
+        card.style.backgroundColor = '#fff';
+        card.style.border = '1px solid #ddd';
+        card.style.borderRadius = '8px';
+        card.style.padding = '15px';
+        card.style.marginBottom = '20px';
+        card.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+        
+        // Header with image number
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.marginBottom = '10px';
+        
+        const title = document.createElement('strong');
+        title.textContent = `Image #${index + 1}`;
+        title.style.color = '#007bff';
+        
+        const date = document.createElement('small');
+        date.textContent = img.date || new Date().toLocaleString();
+        date.style.color = '#666';
+        
+        header.appendChild(title);
+        header.appendChild(date);
+        card.appendChild(header);
+        
+        // Image preview
+        const imgPreview = document.createElement('img');
+        imgPreview.src = img.data;
+        imgPreview.alt = img.caption || 'Preview';
+        imgPreview.style.width = '100%';
+        imgPreview.style.height = '200px';
+        imgPreview.style.objectFit = 'cover';
+        imgPreview.style.borderRadius = '5px';
+        imgPreview.style.marginBottom = '10px';
+        imgPreview.style.border = '1px solid #eee';
+        card.appendChild(imgPreview);
+        
+        // Caption if exists
+        if (img.caption) {
+            const caption = document.createElement('p');
+            caption.textContent = `📝 ${img.caption}`;
+            caption.style.margin = '10px 0';
+            caption.style.padding = '8px';
+            caption.style.backgroundColor = '#f8f9fa';
+            caption.style.borderRadius = '4px';
+            caption.style.fontStyle = 'italic';
+            card.appendChild(caption);
+        }
+        
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️ Delete Image';
+        deleteBtn.style.backgroundColor = '#dc3545';
+        deleteBtn.style.color = 'white';
+        deleteBtn.style.border = 'none';
+        deleteBtn.style.padding = '10px 15px';
+        deleteBtn.style.borderRadius = '4px';
+        deleteBtn.style.cursor = 'pointer';
+        deleteBtn.style.width = '100%';
+        deleteBtn.style.fontSize = '14px';
+        deleteBtn.style.fontWeight = 'bold';
+        
+        deleteBtn.onclick = () => deleteImage(index);
+        
+        card.appendChild(deleteBtn);
+        list.appendChild(card);
+    });
+}
+
+// Preview image before upload
+function previewImage(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById("imagePreview");
+    const uploadBtn = document.getElementById("uploadBtn");
+    
+    if (!file) return;
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert("❌ Image too large! Max 5MB");
+        event.target.value = "";
+        return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+        alert("❌ Please select an image file");
+        event.target.value = "";
+        return;
+    }
+    
+    selectedImage = file;
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        preview.innerHTML = `<img src="${e.target.result}" style="max-width:100%; max-height:200px; border-radius:5px; border:2px solid #007bff;">`;
+    };
+    reader.readAsDataURL(file);
+    
+    uploadBtn.disabled = false;
+}
+
+// Upload image
+async function uploadImage() {
     const password = document.getElementById("galleryAdminPass").value;
+    const caption = document.getElementById("imageCaption").value;
     
     if (password !== ADMIN_PASSWORD) {
         alert("❌ Wrong password!");
         return;
     }
     
-    const widget = initCloudinaryWidget();
+    if (!selectedImage) {
+        alert("❌ Select an image first!");
+        return;
+    }
     
-    widget.open();
-    
-    widget.on('success', async (result) => {
-        const imageData = result.info;
+    try {
+        // Show loading
+        document.getElementById("uploadBtn").disabled = true;
+        document.getElementById("uploadBtn").textContent = "⏳ Uploading...";
         
-        // Get current images from JSONBin
-        try {
+        // Convert image to base64
+        const reader = new FileReader();
+        reader.readAsDataURL(selectedImage);
+        
+        reader.onloadend = async function() {
+            // Get current images
             const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-                headers: { 'X-Master-Key': MASTER_KEY }
+                headers: { 
+                    'X-Master-Key': MASTER_KEY,
+                    'X-Bin-Meta': 'false'
+                }
             });
+            
+            if (!getRes.ok) {
+                throw new Error('Failed to get current images');
+            }
             
             const data = await getRes.json();
-            const images = data.record?.images || [];
+            const images = data.images || [];
             
-            // Add Cloudinary image data (not the actual image)
-            images.unshift({
-                type: 'cloudinary',
-                publicId: imageData.public_id,
-                url: imageData.secure_url,
-                thumbnail: imageData.secure_url.replace('/upload/', '/upload/w_300,h_200,c_fill/'), // Thumbnail version
-                caption: document.getElementById("imageCaption").value,
-                date: new Date().toLocaleString(),
-                width: imageData.width,
-                height: imageData.height,
-                format: imageData.format
-            });
+            console.log("Current images:", images.length);
             
-            // Save to JSONBin
-            await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
+            // Add new image
+            const newImage = {
+                data: reader.result,
+                caption: caption,
+                date: new Date().toLocaleString()
+            };
+            
+            images.unshift(newImage);
+            
+            console.log("After adding:", images.length);
+            
+            // Save back to JSONBin
+            const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -240,14 +437,83 @@ function uploadWithCloudinary() {
                 body: JSON.stringify({ images: images })
             });
             
-            document.getElementById("imageCaption").value = "";
-            alert("✅ Image uploaded to Cloudinary!");
-            loadGallery();
-            
-        } catch (error) {
-            console.error('Error saving:', error);
-            alert("Error saving image reference");
-        }
-    });
+            if (putRes.ok) {
+                // Clear form
+                document.getElementById("imageUpload").value = "";
+                document.getElementById("imageCaption").value = "";
+                document.getElementById("imagePreview").innerHTML = "";
+                document.getElementById("galleryAdminPass").value = "";
+                document.getElementById("uploadBtn").textContent = "📤 Upload Image";
+                selectedImage = null;
+                
+                alert(`✅ Image uploaded! Total images: ${images.length}`);
+                loadGallery(); // Reload to show all images
+            } else {
+                throw new Error('Failed to save');
+            }
+        };
+        
+    } catch (error) {
+        console.error('Upload error:', error);
+        alert("❌ Error uploading: " + error.message);
+        document.getElementById("uploadBtn").disabled = false;
+        document.getElementById("uploadBtn").textContent = "📤 Upload Image";
+    }
 }
 
+// Delete image
+async function deleteImage(index) {
+    const password = document.getElementById("galleryAdminPass").value;
+    
+    if (password !== ADMIN_PASSWORD) {
+        alert("❌ Please enter the admin password first!");
+        return;
+    }
+    
+    if (!confirm("🗑️ Delete this image?")) return;
+    
+    try {
+        // Get current images
+        const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
+            headers: { 
+                'X-Master-Key': MASTER_KEY,
+                'X-Bin-Meta': 'false'
+            }
+        });
+        
+        if (!getRes.ok) {
+            throw new Error('Failed to get images');
+        }
+        
+        const data = await getRes.json();
+        const images = data.images || [];
+        
+        console.log("Before delete:", images.length);
+        
+        // Remove image at index
+        images.splice(index, 1);
+        
+        console.log("After delete:", images.length);
+        
+        // Save back
+        const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': MASTER_KEY
+            },
+            body: JSON.stringify({ images: images })
+        });
+        
+        if (putRes.ok) {
+            alert("✅ Image deleted!");
+            loadGallery(); // Reload both gallery and admin view
+        } else {
+            throw new Error('Failed to save');
+        }
+        
+    } catch (error) {
+        console.error('Delete error:', error);
+        alert("❌ Error deleting: " + error.message);
+    }
+}

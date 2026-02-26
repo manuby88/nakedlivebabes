@@ -149,327 +149,104 @@ async function clearAnnouncements() {
     }
 }
 
-// ============ GALLERY FUNCTIONS ============
+// ============ GALLERY FUNCTIONS WITH CLOUDINARY ============
+// Add your Cloudinary config
+const CLOUDINARY_CONFIG = {
+    cloudName: 'your-cloud-name', // Replace with your cloud name
+    uploadPreset: 'your-unsigned-preset', // Create an unsigned upload preset in Cloudinary
+    folder: 'gallery'
+};
+
 let selectedImage = null;
 
-// Load gallery
-async function loadGallery() {
-    const container = document.getElementById("gallery-container");
-    const adminList = document.getElementById("image-list");
-    
-    if (!container) return;
-    
-    try {
-        container.innerHTML = "<p>Loading gallery...</p>";
-        
-        const data = await fetchFromJSONBin(GALLERY_BIN_ID, 'GET');
-        const images = data.images || [];
-        
-        console.log("Loaded images:", images.length);
-        
-        // Display in public gallery
-        container.innerHTML = "";
-        
-        if (images.length === 0) {
-            container.innerHTML = "<p>No images in gallery yet.</p>";
-        } else {
-            images.forEach((img, index) => {
-                const div = document.createElement("div");
-                div.className = "gallery-image";
-                div.style.marginBottom = "20px";
-                div.style.border = "1px solid #ddd";
-                div.style.borderRadius = "8px";
-                div.style.overflow = "hidden";
-                
-                div.innerHTML = `
-                    <img src="${img.data}" alt="${img.caption || ''}" style="width:100%; height:200px; object-fit:cover;">
-                    ${img.caption ? `<div style="padding:10px; background:#f8f9fa; text-align:center;">${img.caption}</div>` : ''}
-                    <div style="padding:5px; background:#eee; text-align:center; font-size:12px;">Image ${index + 1} of ${images.length}</div>
-                `;
-                container.appendChild(div);
-            });
+// Initialize Cloudinary Upload Widget
+function initCloudinaryWidget() {
+    return cloudinary.createUploadWidget({
+        cloudName: CLOUDINARY_CONFIG.cloudName,
+        uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+        folder: CLOUDINARY_CONFIG.folder,
+        maxFileSize: 10000000, // 10MB
+        maxImageFileSize: 5000000, // 5MB
+        cropping: true, // Allow cropping
+        croppingAspectRatio: 1.77, // 16:9 aspect ratio
+        showAdvancedOptions: false,
+        sources: ['local', 'url', 'camera'],
+        multiple: false,
+        styles: {
+            palette: {
+                window: "#FFFFFF",
+                windowBorder: "#90A0B3",
+                tabIcon: "#0078FF",
+                menuIcons: "#5A6169",
+                textDark: "#000000",
+                textLight: "#FFFFFF",
+                link: "#0078FF",
+                action: "#FF620C",
+                inactiveTabIcon: "#0E2F5A",
+                error: "#F44235",
+                inProgress: "#0078FF",
+                complete: "#20B832",
+                sourceBg: "#E4EBF1"
+            }
         }
-        
-        // Display in admin panel
-        if (adminList) {
-            displayImageList(images);
-        }
-        
-    } catch (error) {
-        console.error('Gallery error:', error);
-        container.innerHTML = "<p>Error loading gallery. Check your Master Key and Gallery Bin ID.</p>";
-    }
-}
-
-// Display images in admin panel
-function displayImageList(images) {
-    const list = document.getElementById("image-list");
-    if (!list) return;
-    
-    list.innerHTML = "";
-    
-    if (images.length === 0) {
-        list.innerHTML = "<p>No images uploaded yet.</p>";
-        return;
-    }
-    
-    images.forEach((img, index) => {
-        const div = document.createElement("div");
-        div.style.marginBottom = "25px";
-        div.style.border = "1px solid #ddd";
-        div.style.padding = "15px";
-        div.style.borderRadius = "8px";
-        div.style.backgroundColor = "#f9f9f9";
-        
-        // Image number
-        const number = document.createElement('div');
-        number.textContent = `Image #${index + 1}`;
-        number.style.fontWeight = "bold";
-        number.style.marginBottom = "10px";
-        number.style.color = "#007bff";
-        div.appendChild(number);
-        
-        // Image
-        const imgEl = document.createElement('img');
-        imgEl.src = img.data;
-        imgEl.style.width = "100%";
-        imgEl.style.height = "150px";
-        imgEl.style.objectFit = "cover";
-        imgEl.style.borderRadius = "5px";
-        imgEl.style.marginBottom = "10px";
-        div.appendChild(imgEl);
-        
-        // Caption
-        if (img.caption) {
-            const cap = document.createElement('p');
-            cap.textContent = `📝 ${img.caption}`;
-            cap.style.margin = "10px 0";
-            cap.style.fontStyle = "italic";
-            cap.style.color = "#555";
-            div.appendChild(cap);
-        }
-        
-        // Date
-        if (img.date) {
-            const date = document.createElement('small');
-            date.textContent = `📅 ${img.date}`;
-            date.style.color = "#666";
-            date.style.display = "block";
-            date.style.marginBottom = "15px";
-            div.appendChild(date);
-        }
-        
-        // Delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = "🗑️ Delete This Image";
-        deleteBtn.style.backgroundColor = "#dc3545";
-        deleteBtn.style.color = "white";
-        deleteBtn.style.border = "none";
-        deleteBtn.style.padding = "12px";
-        deleteBtn.style.borderRadius = "5px";
-        deleteBtn.style.cursor = "pointer";
-        deleteBtn.style.width = "100%";
-        deleteBtn.style.fontSize = "16px";
-        deleteBtn.style.fontWeight = "bold";
-        
-        deleteBtn.onclick = () => deleteImage(index);
-        
-        div.appendChild(deleteBtn);
-        list.appendChild(div);
     });
 }
 
-// Preview image before upload
-function previewImage(event) {
-    const file = event.target.files[0];
-    const preview = document.getElementById("imagePreview");
-    const uploadBtn = document.getElementById("uploadBtn");
-    
-    if (!file) return;
-    
-    if (file.size > 5 * 1024 * 1024) {
-        alert("❌ Image too large! Max 5MB");
-        event.target.value = "";
-        return;
-    }
-    
-    if (!file.type.startsWith('image/')) {
-        alert("❌ Please select an image file");
-        event.target.value = "";
-        return;
-    }
-    
-    selectedImage = file;
-    
-    const reader = new FileReader();
-    reader.onload = e => {
-        preview.innerHTML = `<img src="${e.target.result}" style="max-width:100%; max-height:200px; border-radius:5px; margin-top:10px; border:2px solid #007bff;">`;
-    };
-    reader.readAsDataURL(file);
-    
-    uploadBtn.disabled = false;
-}
-
-// Upload image
-async function uploadImage() {
+// Upload with Cloudinary
+function uploadWithCloudinary() {
     const password = document.getElementById("galleryAdminPass").value;
-    const caption = document.getElementById("imageCaption").value;
     
     if (password !== ADMIN_PASSWORD) {
         alert("❌ Wrong password!");
         return;
     }
     
-    if (!selectedImage) {
-        alert("❌ Select an image first!");
-        return;
-    }
+    const widget = initCloudinaryWidget();
     
-    try {
-        const reader = new FileReader();
-        reader.readAsDataURL(selectedImage);
+    widget.open();
+    
+    widget.on('success', async (result) => {
+        const imageData = result.info;
         
-        reader.onloadend = async function() {
-            // Get current images
-            const data = await fetchFromJSONBin(GALLERY_BIN_ID, 'GET');
-            const images = data.images || [];
-            
-            console.log("Current images:", images.length);
-            
-            // Add new image
-            images.unshift({
-                data: reader.result,
-                caption: caption,
-                date: new Date().toLocaleString()
+        // Get current images from JSONBin
+        try {
+            const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
+                headers: { 'X-Master-Key': MASTER_KEY }
             });
             
-            console.log("After adding:", images.length);
+            const data = await getRes.json();
+            const images = data.record?.images || [];
             
-            // Save
-            await fetchFromJSONBin(GALLERY_BIN_ID, 'PUT', { images: images });
+            // Add Cloudinary image data (not the actual image)
+            images.unshift({
+                type: 'cloudinary',
+                publicId: imageData.public_id,
+                url: imageData.secure_url,
+                thumbnail: imageData.secure_url.replace('/upload/', '/upload/w_300,h_200,c_fill/'), // Thumbnail version
+                caption: document.getElementById("imageCaption").value,
+                date: new Date().toLocaleString(),
+                width: imageData.width,
+                height: imageData.height,
+                format: imageData.format
+            });
             
-            // Clear form
-            document.getElementById("imageUpload").value = "";
+            // Save to JSONBin
+            await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': MASTER_KEY
+                },
+                body: JSON.stringify({ images: images })
+            });
+            
             document.getElementById("imageCaption").value = "";
-            document.getElementById("imagePreview").innerHTML = "";
-            document.getElementById("galleryAdminPass").value = "";
-            document.getElementById("uploadBtn").disabled = true;
-            selectedImage = null;
-            
-            alert(`✅ Image uploaded! Total images: ${images.length}`);
+            alert("✅ Image uploaded to Cloudinary!");
             loadGallery();
-        };
-        
-    } catch (error) {
-        console.error('Upload error:', error);
-        alert("❌ Error uploading. Check your Master Key.");
-    }
+            
+        } catch (error) {
+            console.error('Error saving:', error);
+            alert("Error saving image reference");
+        }
+    });
 }
-
-// Delete image
-async function deleteImage(index) {
-    const password = document.getElementById("galleryAdminPass").value;
-    
-    if (password !== ADMIN_PASSWORD) {
-        alert("❌ Please enter the admin password first!");
-        return;
-    }
-    
-    if (!confirm("🗑️ Delete this image?")) return;
-    
-    try {
-        // Get current images
-        const data = await fetchFromJSONBin(GALLERY_BIN_ID, 'GET');
-        const images = data.images || [];
-        
-        console.log("Before delete:", images.length);
-        
-        // Remove image
-        images.splice(index, 1);
-        
-        console.log("After delete:", images.length);
-        
-        // Save
-        await fetchFromJSONBin(GALLERY_BIN_ID, 'PUT', { images: images });
-        
-        alert("✅ Image deleted!");
-        loadGallery();
-        
-    } catch (error) {
-        console.error('Delete error:', error);
-        alert("❌ Error deleting. Check your Master Key.");
-    }
-}
-
-// ============ INITIALIZE ============
-document.addEventListener("DOMContentLoaded", function() {
-    // Add CSS styles
-    const style = document.createElement('style');
-    style.textContent = `
-        .announcement-item {
-            background: #f8f9fa;
-            border-left: 4px solid #007bff;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .announcement-item p {
-            margin: 0 0 10px 0;
-            color: #333;
-        }
-        .announcement-item small {
-            color: #666;
-        }
-        .admin-panel {
-            background: #f0f0f0;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-        }
-        .admin-panel input, .admin-panel textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .admin-panel button {
-            padding: 10px 20px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        .clear-btn {
-            background: #dc3545 !important;
-        }
-        #gallery-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
-        }
-        .image-upload-section {
-            background: #e9ecef;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-        }
-        #imagePreview {
-            margin: 10px 0;
-        }
-    `;
-    document.head.appendChild(style);
-    
-    // Load content
-    if (document.getElementById("announcement-list")) {
-        loadAnnouncements();
-    }
-    if (document.getElementById("gallery-container")) {
-        loadGallery();
-    }
-});
-

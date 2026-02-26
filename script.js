@@ -152,8 +152,8 @@ async function clearAnnouncements() {
 // ============ GALLERY FUNCTIONS WITH CLOUDINARY ============
 // Add your Cloudinary config
 const CLOUDINARY_CONFIG = {
-    cloudName: 'your-cloud-name', // Replace with your cloud name
-    uploadPreset: 'your-unsigned-preset', // Create an unsigned upload preset in Cloudinary
+    cloudName: 'dljtavfop', // Replace with your cloud name
+    uploadPreset: 'nakedlivebabes', // Create an unsigned upload preset in Cloudinary
     folder: 'gallery'
 };
 
@@ -250,3 +250,4 @@ function uploadWithCloudinary() {
         }
     });
 }
+

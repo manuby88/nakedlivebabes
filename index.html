@@ -99,10 +99,11 @@
     
     <div class="image-upload-section">
         <h3>Upload New Image</h3>
-        <input type="file" id="imageUpload" accept="image/*" onchange="previewImage(event)">
         <input type="text" id="imageCaption" placeholder="Image caption (optional)">
-        <div id="imagePreview"></div>
-        <button onclick="uploadImage()" id="uploadBtn">📤 Upload Image</button>
+        <button onclick="uploadWithCloudinary()" id="cloudinaryUploadBtn" class="cloudinary-btn">
+            ☁️ Upload with Cloudinary (Protected)
+        </button>
+        <p class="note">Images are protected and cannot be downloaded</p>
     </div>
     
     <div class="current-images">
@@ -181,6 +182,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
 

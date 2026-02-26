@@ -149,7 +149,7 @@ async function clearAnnouncements() {
     }
 }
 
-// ============ SIMPLE WORKING GALLERY ============
+// ============ SIMPLE GALLERY MANAGEMENT ============
 let selectedImage = null;
 
 // Load gallery
@@ -162,38 +162,33 @@ async function loadGallery() {
     try {
         container.innerHTML = "<p>Loading gallery...</p>";
         
-        // Fetch from JSONBin
         const response = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
             headers: { 
                 'X-Master-Key': MASTER_KEY,
-                'X-Bin-Meta': 'false'
+                'Content-Type': 'application/json'
             }
         });
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error('Failed to load');
         
         const data = await response.json();
-        const images = data.images || [];
+        const images = data.record?.images || data.images || [];
         
         console.log("Loaded images:", images.length);
         
-        // Show in public gallery
+        // Display public gallery
         displayPublicGallery(images);
         
-        // Show in admin panel
-        if (adminList) {
-            displayAdminGallery(images);
-        }
+        // Display admin list
+        if (adminList) displayAdminGallery(images);
         
     } catch (error) {
-        console.error('Gallery error:', error);
+        console.error('Error:', error);
         container.innerHTML = "<p>Error loading gallery. Check console.</p>";
     }
 }
 
-// Display images in public gallery
+// Display public gallery
 function displayPublicGallery(images) {
     const container = document.getElementById("gallery-container");
     if (!container) return;
@@ -205,58 +200,30 @@ function displayPublicGallery(images) {
         return;
     }
     
-    // Create grid layout
     container.style.display = 'grid';
-    container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+    container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
     container.style.gap = '20px';
     
-    images.forEach((img, index) => {
-        const card = document.createElement('div');
-        card.style.backgroundColor = '#fff';
-        card.style.borderRadius = '8px';
-        card.style.overflow = 'hidden';
-        card.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-        card.style.position = 'relative';
+    images.forEach(img => {
+        const div = document.createElement('div');
+        div.style.backgroundColor = '#fff';
+        div.style.borderRadius = '8px';
+        div.style.overflow = 'hidden';
+        div.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
         
-        // Image
-        const imgElement = document.createElement('img');
-        imgElement.src = img.data; // This is the base64 image
-        imgElement.alt = img.caption || 'Gallery image';
-        imgElement.style.width = '100%';
-        imgElement.style.height = '250px';
-        imgElement.style.objectFit = 'cover';
-        imgElement.style.display = 'block';
+        div.innerHTML = `
+            <img src="${img.data}" alt="${img.caption || ''}" style="width:100%; height:200px; object-fit:cover; display:block;">
+            ${img.caption ? `<div style="padding:10px; text-align:center; background:#f8f9fa;">${img.caption}</div>` : ''}
+            <div style="padding:5px 10px; font-size:12px; color:#666; background:#f8f9fa; border-top:1px solid #eee;">
+                ${img.date || ''}
+            </div>
+        `;
         
-        // Caption
-        if (img.caption) {
-            const caption = document.createElement('div');
-            caption.textContent = img.caption;
-            caption.style.padding = '12px';
-            caption.style.backgroundColor = '#f8f9fa';
-            caption.style.color = '#333';
-            caption.style.fontSize = '14px';
-            caption.style.textAlign = 'center';
-            card.appendChild(caption);
-        }
-        
-        // Date (small)
-        if (img.date) {
-            const date = document.createElement('div');
-            date.textContent = img.date;
-            date.style.padding = '5px 12px 12px';
-            date.style.fontSize = '12px';
-            date.style.color = '#666';
-            date.style.backgroundColor = '#f8f9fa';
-            date.style.borderTop = '1px solid #eee';
-            card.appendChild(date);
-        }
-        
-        card.insertBefore(imgElement, card.firstChild);
-        container.appendChild(card);
+        container.appendChild(div);
     });
 }
 
-// Display images in admin panel
+// Display admin gallery
 function displayAdminGallery(images) {
     const list = document.getElementById("image-list");
     if (!list) return;
@@ -264,83 +231,33 @@ function displayAdminGallery(images) {
     list.innerHTML = "";
     
     if (images.length === 0) {
-        list.innerHTML = "<p>No images uploaded yet. Click 'Upload Image' to add some.</p>";
+        list.innerHTML = "<p>No images uploaded yet. Use the form above to add images.</p>";
         return;
     }
     
     images.forEach((img, index) => {
-        const card = document.createElement('div');
-        card.style.backgroundColor = '#fff';
-        card.style.border = '1px solid #ddd';
-        card.style.borderRadius = '8px';
-        card.style.padding = '15px';
-        card.style.marginBottom = '20px';
-        card.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+        const div = document.createElement('div');
+        div.style.marginBottom = '20px';
+        div.style.padding = '15px';
+        div.style.border = '1px solid #ddd';
+        div.style.borderRadius = '8px';
+        div.style.backgroundColor = '#f9f9f9';
         
-        // Header with image number
-        const header = document.createElement('div');
-        header.style.display = 'flex';
-        header.style.justifyContent = 'space-between';
-        header.style.alignItems = 'center';
-        header.style.marginBottom = '10px';
+        div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <strong style="color:#007bff;">Image #${index + 1}</strong>
+                <small style="color:#666;">${img.date || ''}</small>
+            </div>
+            <img src="${img.data}" style="width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px;">
+            ${img.caption ? `<p style="margin:10px 0; font-style:italic;">📝 ${img.caption}</p>` : ''}
+            <button onclick="deleteImage(${index})" style="background:#dc3545; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; width:100%;">🗑️ Delete</button>
+        `;
         
-        const title = document.createElement('strong');
-        title.textContent = `Image #${index + 1}`;
-        title.style.color = '#007bff';
-        
-        const date = document.createElement('small');
-        date.textContent = img.date || new Date().toLocaleString();
-        date.style.color = '#666';
-        
-        header.appendChild(title);
-        header.appendChild(date);
-        card.appendChild(header);
-        
-        // Image preview
-        const imgPreview = document.createElement('img');
-        imgPreview.src = img.data;
-        imgPreview.alt = img.caption || 'Preview';
-        imgPreview.style.width = '100%';
-        imgPreview.style.height = '200px';
-        imgPreview.style.objectFit = 'cover';
-        imgPreview.style.borderRadius = '5px';
-        imgPreview.style.marginBottom = '10px';
-        imgPreview.style.border = '1px solid #eee';
-        card.appendChild(imgPreview);
-        
-        // Caption if exists
-        if (img.caption) {
-            const caption = document.createElement('p');
-            caption.textContent = `📝 ${img.caption}`;
-            caption.style.margin = '10px 0';
-            caption.style.padding = '8px';
-            caption.style.backgroundColor = '#f8f9fa';
-            caption.style.borderRadius = '4px';
-            caption.style.fontStyle = 'italic';
-            card.appendChild(caption);
-        }
-        
-        // Delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = '🗑️ Delete Image';
-        deleteBtn.style.backgroundColor = '#dc3545';
-        deleteBtn.style.color = 'white';
-        deleteBtn.style.border = 'none';
-        deleteBtn.style.padding = '10px 15px';
-        deleteBtn.style.borderRadius = '4px';
-        deleteBtn.style.cursor = 'pointer';
-        deleteBtn.style.width = '100%';
-        deleteBtn.style.fontSize = '14px';
-        deleteBtn.style.fontWeight = 'bold';
-        
-        deleteBtn.onclick = () => deleteImage(index);
-        
-        card.appendChild(deleteBtn);
-        list.appendChild(card);
+        list.appendChild(div);
     });
 }
 
-// Preview image before upload
+// Preview image
 function previewImage(event) {
     const file = event.target.files[0];
     const preview = document.getElementById("imagePreview");
@@ -355,29 +272,24 @@ function previewImage(event) {
         return;
     }
     
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-        alert("❌ Please select an image file");
-        event.target.value = "";
-        return;
-    }
-    
     selectedImage = file;
     
-    // Show preview
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = e => {
         preview.innerHTML = `<img src="${e.target.result}" style="max-width:100%; max-height:200px; border-radius:5px; border:2px solid #007bff;">`;
     };
     reader.readAsDataURL(file);
     
     uploadBtn.disabled = false;
+    uploadBtn.style.opacity = '1';
+    uploadBtn.style.cursor = 'pointer';
 }
 
 // Upload image
 async function uploadImage() {
     const password = document.getElementById("galleryAdminPass").value;
     const caption = document.getElementById("imageCaption").value;
+    const uploadBtn = document.getElementById("uploadBtn");
     
     if (password !== ADMIN_PASSWORD) {
         alert("❌ Wrong password!");
@@ -390,11 +302,9 @@ async function uploadImage() {
     }
     
     try {
-        // Show loading
-        document.getElementById("uploadBtn").disabled = true;
-        document.getElementById("uploadBtn").textContent = "⏳ Uploading...";
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = "⏳ Uploading...";
         
-        // Convert image to base64
         const reader = new FileReader();
         reader.readAsDataURL(selectedImage);
         
@@ -403,31 +313,21 @@ async function uploadImage() {
             const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
                 headers: { 
                     'X-Master-Key': MASTER_KEY,
-                    'X-Bin-Meta': 'false'
+                    'Content-Type': 'application/json'
                 }
             });
             
-            if (!getRes.ok) {
-                throw new Error('Failed to get current images');
-            }
-            
             const data = await getRes.json();
-            const images = data.images || [];
-            
-            console.log("Current images:", images.length);
+            const images = data.record?.images || data.images || [];
             
             // Add new image
-            const newImage = {
+            images.unshift({
                 data: reader.result,
                 caption: caption,
                 date: new Date().toLocaleString()
-            };
+            });
             
-            images.unshift(newImage);
-            
-            console.log("After adding:", images.length);
-            
-            // Save back to JSONBin
+            // Save
             const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
                 method: 'PUT',
                 headers: {
@@ -443,21 +343,20 @@ async function uploadImage() {
                 document.getElementById("imageCaption").value = "";
                 document.getElementById("imagePreview").innerHTML = "";
                 document.getElementById("galleryAdminPass").value = "";
-                document.getElementById("uploadBtn").textContent = "📤 Upload Image";
+                uploadBtn.textContent = "📤 Upload Image";
+                uploadBtn.disabled = true;
                 selectedImage = null;
                 
-                alert(`✅ Image uploaded! Total images: ${images.length}`);
-                loadGallery(); // Reload to show all images
-            } else {
-                throw new Error('Failed to save');
+                alert(`✅ Image uploaded! Total: ${images.length}`);
+                loadGallery();
             }
         };
         
     } catch (error) {
-        console.error('Upload error:', error);
-        alert("❌ Error uploading: " + error.message);
-        document.getElementById("uploadBtn").disabled = false;
-        document.getElementById("uploadBtn").textContent = "📤 Upload Image";
+        console.error('Error:', error);
+        alert("❌ Upload failed");
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = "📤 Upload Image";
     }
 }
 
@@ -466,37 +365,23 @@ async function deleteImage(index) {
     const password = document.getElementById("galleryAdminPass").value;
     
     if (password !== ADMIN_PASSWORD) {
-        alert("❌ Please enter the admin password first!");
+        alert("❌ Enter password first!");
         return;
     }
     
-    if (!confirm("🗑️ Delete this image?")) return;
+    if (!confirm("Delete this image?")) return;
     
     try {
-        // Get current images
         const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-            headers: { 
-                'X-Master-Key': MASTER_KEY,
-                'X-Bin-Meta': 'false'
-            }
+            headers: { 'X-Master-Key': MASTER_KEY }
         });
         
-        if (!getRes.ok) {
-            throw new Error('Failed to get images');
-        }
-        
         const data = await getRes.json();
-        const images = data.images || [];
+        const images = data.record?.images || data.images || [];
         
-        console.log("Before delete:", images.length);
-        
-        // Remove image at index
         images.splice(index, 1);
         
-        console.log("After delete:", images.length);
-        
-        // Save back
-        const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
+        await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -505,15 +390,11 @@ async function deleteImage(index) {
             body: JSON.stringify({ images: images })
         });
         
-        if (putRes.ok) {
-            alert("✅ Image deleted!");
-            loadGallery(); // Reload both gallery and admin view
-        } else {
-            throw new Error('Failed to save');
-        }
+        alert("✅ Deleted!");
+        loadGallery();
         
     } catch (error) {
-        console.error('Delete error:', error);
-        alert("❌ Error deleting: " + error.message);
+        console.error('Error:', error);
+        alert("❌ Delete failed");
     }
 }

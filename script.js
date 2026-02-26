@@ -733,3 +733,213 @@ document.addEventListener("DOMContentLoaded", function() {
     `;
     document.head.appendChild(style);
 });
+// ============ SCREENSHOT PROTECTION ============
+
+// 1. Disable right-click completely
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    return false;
+});
+
+// 2. Disable common keyboard shortcuts for screenshots/dev tools
+document.addEventListener('keydown', function(e) {
+    // Disable Print Screen (PrtScn)
+    if (e.key === 'PrintScreen') {
+        e.preventDefault();
+        alert('📸 Screenshots are disabled on this site');
+        return false;
+    }
+    
+    // Disable Ctrl+Shift+I (DevTools)
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+        e.preventDefault();
+        alert('🛠️ Developer tools are disabled');
+        return false;
+    }
+    
+    // Disable Ctrl+Shift+J (DevTools)
+    if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Disable Ctrl+U (View Source)
+    if (e.ctrlKey && e.key === 'u') {
+        e.preventDefault();
+        alert('🔍 View source is disabled');
+        return false;
+    }
+    
+    // Disable Ctrl+S (Save)
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        alert('💾 Save is disabled');
+        return false;
+    }
+    
+    // Disable Ctrl+P (Print)
+    if (e.ctrlKey && e.key === 'p') {
+        e.preventDefault();
+        alert('🖨️ Print is disabled');
+        return false;
+    }
+    
+    // Disable Ctrl+Shift+C (Inspect)
+    if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Disable F12 (DevTools)
+    if (e.key === 'F12') {
+        e.preventDefault();
+        alert('🛠️ Developer tools are disabled');
+        return false;
+    }
+});
+
+// 3. Detect DevTools opening (advanced)
+(function() {
+    const devtools = {
+        open: false,
+        orientation: null
+    };
+    
+    const threshold = 160;
+    
+    setInterval(function() {
+        const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+        const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+        
+        if (widthThreshold || heightThreshold) {
+            if (!devtools.open) {
+                devtools.open = true;
+                document.body.innerHTML = '<h1 style="color:red; text-align:center; margin-top:50px;">🚫 Developer tools detected. Please close them to continue.</h1>';
+            }
+        } else {
+            devtools.open = false;
+        }
+    }, 1000);
+})();
+
+// 4. Disable drag and drop of images
+document.addEventListener('dragstart', function(e) {
+    if (e.target.tagName === 'IMG') {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// 5. Disable copy for images
+document.addEventListener('copy', function(e) {
+    if (e.target.tagName === 'IMG') {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// 6. Add CSS protection
+const style = document.createElement('style');
+style.textContent = `
+    /* Prevent image selection */
+    img {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-user-drag: none;
+        -khtml-user-drag: none;
+        -moz-user-drag: none;
+        -o-user-drag: none;
+        user-drag: none;
+        pointer-events: none;
+    }
+    
+    /* Add overlay effect on images */
+    .gallery-image, .announcement-item img {
+        position: relative;
+    }
+    
+    .gallery-image::after, .announcement-item img::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: transparent;
+        z-index: 999;
+    }
+    
+    /* Disable text selection */
+    body {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    
+    /* Blur images slightly when printing */
+    @media print {
+        body { display: none; }
+        img { display: none; }
+        .gallery-container { display: none; }
+    }
+`;
+document.head.appendChild(style);
+
+// 7. Add watermark overlay to gallery images (optional)
+function addWatermarkToImages() {
+    const galleryImages = document.querySelectorAll('.gallery-image img');
+    galleryImages.forEach(img => {
+        const watermark = document.createElement('div');
+        watermark.textContent = '© Naked Live Babes';
+        watermark.style.cssText = `
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            background: rgba(0,0,0,0.3);
+            padding: 2px 5px;
+            border-radius: 3px;
+            pointer-events: none;
+            z-index: 1000;
+        `;
+        
+        if (img.parentElement.style.position !== 'relative') {
+            img.parentElement.style.position = 'relative';
+        }
+        
+        img.parentElement.appendChild(watermark);
+    });
+}
+
+// 8. Blur images slightly when window loses focus (user might be screenshotting)
+window.addEventListener('blur', function() {
+    document.querySelectorAll('img').forEach(img => {
+        img.style.filter = 'blur(5px)';
+        img.style.transition = 'filter 0.3s';
+    });
+});
+
+window.addEventListener('focus', function() {
+    document.querySelectorAll('img').forEach(img => {
+        img.style.filter = 'none';
+    });
+});
+
+// 9. Disable right-click specifically on images
+document.querySelectorAll('img').forEach(img => {
+    img.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        alert('📸 Saving images is disabled');
+        return false;
+    });
+});
+
+console.log('🔒 Screenshot protection enabled');

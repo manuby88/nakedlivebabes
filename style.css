@@ -723,3 +723,28 @@ footer {
     background: #6c757d;
     cursor: not-allowed;
 }
+/* Disable right-click on images */
+.gallery-image img,
+.announcement-item img,
+img {
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+/* Add overlay that blocks saving */
+.image-protection {
+    position: relative;
+    display: inline-block;
+}
+
+.image-protection::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 2;
+}

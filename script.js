@@ -1,12 +1,12 @@
+
 // ============ CONFIGURATION ============
-// REPLACE WITH YOUR ACTUAL VALUES FROM JSONBIN.IO
-const MASTER_KEY = '$2a$10$/73BHVkiHDdroKUGU7j2JuqgjESyGWvbXU3iU.piqoZTj4uUA4moi'; // Keep for announcements
-const ACCESS_KEY = '$2a$10$B8M5zdwJWxxYFgfTlkePlOn51jF.4/dKR5VFty21R4SocxHvPH812'; // Create this in JSONBin.io for gallery
+// REPLACE WITH YOUR ACTUAL VALUES
+const MASTER_KEY = '$2a$10$/73BHVkiHDdroKUGU7j2JuqgjESyGWvbXU3iU.piqoZTj4uUA4moi'; // Your master key
 const BIN_ID = '699881a243b1c97be98eaf4d'; // Your announcement bin ID
 const GALLERY_BIN_ID = '69a04e22ae596e708f4c3ca2'; // Your gallery bin ID
-const ADMIN_PASSWORD = 'admin123';
+const ADMIN_PASSWORD = 'kojja emma';
 
-// ============ ANNOUNCEMENT FUNCTIONS (using Master Key) ============
+// ============ ANNOUNCEMENT FUNCTIONS ============
 
 // Load announcements
 async function loadAnnouncements() {
@@ -14,7 +14,7 @@ async function loadAnnouncements() {
     if (!list) return;
     
     try {
-        list.innerHTML = "<p>Loading announcements...</p>";
+        list.innerHTML = "<p style='text-align:center; color:#666;'>Loading announcements...</p>";
         
         const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
             headers: { 
@@ -31,22 +31,44 @@ async function loadAnnouncements() {
         list.innerHTML = "";
         
         if (announcements.length === 0) {
-            list.innerHTML = "<p>No announcements yet.</p>";
+            list.innerHTML = "<p style='text-align:center; color:#666;'>No announcements yet.</p>";
             return;
         }
         
         announcements.forEach(item => {
             const div = document.createElement("div");
             div.className = "announcement-item";
-            div.innerHTML = `
-                <p>${item.message || item}</p>
-                <small>${item.date || new Date().toLocaleString()}</small>
+            div.style.cssText = `
+                background: #f8f9fa;
+                border-left: 4px solid #007bff;
+                padding: 15px;
+                margin-bottom: 15px;
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             `;
+            
+            const message = document.createElement('p');
+            message.style.cssText = `
+                margin: 0 0 10px 0;
+                color: #333;
+                font-size: 16px;
+            `;
+            message.textContent = item.message || item;
+            
+            const date = document.createElement('small');
+            date.style.cssText = `
+                color: #666;
+                font-size: 12px;
+            `;
+            date.textContent = item.date || new Date().toLocaleString();
+            
+            div.appendChild(message);
+            div.appendChild(date);
             list.appendChild(div);
         });
     } catch (error) {
         console.error('Error:', error);
-        list.innerHTML = "<p>Error loading announcements.</p>";
+        list.innerHTML = "<p style='text-align:center; color:#dc3545;'>Error loading announcements.</p>";
     }
 }
 
@@ -57,20 +79,27 @@ async function postAnnouncement() {
     const msgEl = document.getElementById("adminMessage");
     
     msgEl.innerHTML = "";
+    msgEl.style.cssText = "margin-top:10px; padding:10px; border-radius:4px;";
     
     if (!message.trim()) {
         msgEl.innerHTML = "❌ Please enter a message";
-        msgEl.style.color = "red";
+        msgEl.style.backgroundColor = "#f8d7da";
+        msgEl.style.color = "#721c24";
         return;
     }
     
     if (password !== ADMIN_PASSWORD) {
         msgEl.innerHTML = "❌ Wrong password";
-        msgEl.style.color = "red";
+        msgEl.style.backgroundColor = "#f8d7da";
+        msgEl.style.color = "#721c24";
         return;
     }
     
     try {
+        msgEl.innerHTML = "⏳ Posting...";
+        msgEl.style.backgroundColor = "#cce5ff";
+        msgEl.style.color = "#004085";
+        
         const getRes = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
             headers: { 
                 'X-Master-Key': MASTER_KEY,
@@ -98,8 +127,11 @@ async function postAnnouncement() {
         if (putRes.ok) {
             document.getElementById("announcementText").value = "";
             document.getElementById("adminPass").value = "";
+            
             msgEl.innerHTML = "✅ Posted successfully!";
-            msgEl.style.color = "green";
+            msgEl.style.backgroundColor = "#d4edda";
+            msgEl.style.color = "#155724";
+            
             loadAnnouncements();
             
             setTimeout(() => {
@@ -109,7 +141,8 @@ async function postAnnouncement() {
     } catch (error) {
         console.error('Error:', error);
         msgEl.innerHTML = "❌ Error posting";
-        msgEl.style.color = "red";
+        msgEl.style.backgroundColor = "#f8d7da";
+        msgEl.style.color = "#721c24";
     }
 }
 
@@ -118,9 +151,12 @@ async function clearAnnouncements() {
     const password = document.getElementById("adminPass").value;
     const msgEl = document.getElementById("adminMessage");
     
+    msgEl.style.cssText = "margin-top:10px; padding:10px; border-radius:4px;";
+    
     if (password !== ADMIN_PASSWORD) {
         msgEl.innerHTML = "❌ Wrong password";
-        msgEl.style.color = "red";
+        msgEl.style.backgroundColor = "#f8d7da";
+        msgEl.style.color = "#721c24";
         return;
     }
     
@@ -138,7 +174,9 @@ async function clearAnnouncements() {
         
         if (putRes.ok) {
             msgEl.innerHTML = "✅ All cleared!";
-            msgEl.style.color = "green";
+            msgEl.style.backgroundColor = "#d4edda";
+            msgEl.style.color = "#155724";
+            
             document.getElementById("adminPass").value = "";
             loadAnnouncements();
             
@@ -149,11 +187,12 @@ async function clearAnnouncements() {
     } catch (error) {
         console.error('Error:', error);
         msgEl.innerHTML = "❌ Error clearing";
-        msgEl.style.color = "red";
+        msgEl.style.backgroundColor = "#f8d7da";
+        msgEl.style.color = "#721c24";
     }
 }
 
-// ============ GALLERY FUNCTIONS (using Access Key) ============
+// ============ GALLERY FUNCTIONS ============
 let selectedImage = null;
 
 // Load gallery
@@ -164,18 +203,16 @@ async function loadGallery() {
     if (!container) return;
     
     try {
-        container.innerHTML = "<p>Loading gallery...</p>";
+        container.innerHTML = "<p style='text-align:center; color:#666;'>Loading gallery...</p>";
         
         const response = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
             headers: { 
-                'X-Access-Key': ACCESS_KEY,
+                'X-Master-Key': MASTER_KEY,
                 'X-Bin-Meta': 'false'
             }
         });
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error('Failed to load');
         
         const data = await response.json();
         const images = data.images || [];
@@ -183,117 +220,194 @@ async function loadGallery() {
         console.log("Gallery loaded:", images.length, "images");
         
         // Display public gallery
-        displayPublicGallery(images);
+        container.innerHTML = "";
         
-        // Display admin panel
+        if (images.length === 0) {
+            container.innerHTML = "<p style='text-align:center; color:#666;'>No images in gallery yet.</p>";
+        } else {
+            container.style.display = 'grid';
+            container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+            container.style.gap = '20px';
+            container.style.padding = '20px';
+            
+            images.forEach((img, index) => {
+                const card = document.createElement('div');
+                card.style.cssText = `
+                    background: white;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    transition: transform 0.3s;
+                    cursor: pointer;
+                `;
+                
+                card.onmouseover = () => { card.style.transform = 'scale(1.03)'; };
+                card.onmouseout = () => { card.style.transform = 'scale(1)'; };
+                
+                const imgElement = document.createElement('img');
+                imgElement.src = img.data;
+                imgElement.alt = img.caption || '';
+                imgElement.style.cssText = `
+                    width: 100%;
+                    height: 250px;
+                    object-fit: cover;
+                    display: block;
+                `;
+                
+                card.appendChild(imgElement);
+                
+                if (img.caption) {
+                    const caption = document.createElement('div');
+                    caption.style.cssText = `
+                        padding: 15px;
+                        text-align: center;
+                        font-weight: 500;
+                        background: linear-gradient(to right, #f8f9fa, #fff);
+                    `;
+                    caption.textContent = img.caption;
+                    card.appendChild(caption);
+                }
+                
+                const footer = document.createElement('div');
+                footer.style.cssText = `
+                    padding: 8px 15px;
+                    font-size: 12px;
+                    color: #666;
+                    background: #f8f9fa;
+                    border-top: 1px solid #eee;
+                `;
+                footer.innerHTML = `🖼️ Image ${index + 1} • ${img.date || 'No date'}`;
+                card.appendChild(footer);
+                
+                container.appendChild(card);
+            });
+        }
+        
+        // Display admin list
         if (adminList) {
-            displayAdminGallery(images);
+            adminList.innerHTML = "";
+            
+            if (images.length === 0) {
+                adminList.innerHTML = "<p style='text-align:center; color:#666;'>No images uploaded yet. Use the form above to add images.</p>";
+            } else {
+                adminList.style.cssText = `
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                    gap: 20px;
+                    margin-top: 20px;
+                `;
+                
+                images.forEach((img, index) => {
+                    const card = document.createElement('div');
+                    card.style.cssText = `
+                        background: white;
+                        border: 1px solid #e0e0e0;
+                        border-radius: 12px;
+                        padding: 15px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    `;
+                    
+                    const header = document.createElement('div');
+                    header.style.cssText = `
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 15px;
+                    `;
+                    
+                    const badge = document.createElement('span');
+                    badge.style.cssText = `
+                        background: #007bff;
+                        color: white;
+                        padding: 5px 15px;
+                        border-radius: 20px;
+                        font-size: 14px;
+                        font-weight: bold;
+                    `;
+                    badge.textContent = `Image #${index + 1}`;
+                    
+                    const date = document.createElement('span');
+                    date.style.cssText = `
+                        color: #666;
+                        font-size: 13px;
+                    `;
+                    date.textContent = img.date || 'No date';
+                    
+                    header.appendChild(badge);
+                    header.appendChild(date);
+                    card.appendChild(header);
+                    
+                    const imgElement = document.createElement('img');
+                    imgElement.src = img.data;
+                    imgElement.style.cssText = `
+                        width: 100%;
+                        height: 150px;
+                        object-fit: cover;
+                        border-radius: 8px;
+                        margin-bottom: 15px;
+                        border: 1px solid #eee;
+                    `;
+                    card.appendChild(imgElement);
+                    
+                    if (img.caption) {
+                        const captionDiv = document.createElement('div');
+                        captionDiv.style.cssText = `
+                            background: #f0f7ff;
+                            padding: 12px;
+                            border-radius: 8px;
+                            margin-bottom: 15px;
+                            border-left: 4px solid #007bff;
+                        `;
+                        
+                        const captionLabel = document.createElement('strong');
+                        captionLabel.style.cssText = `
+                            color: #007bff;
+                            display: block;
+                            margin-bottom: 5px;
+                        `;
+                        captionLabel.textContent = '📝 Caption:';
+                        
+                        const captionText = document.createElement('p');
+                        captionText.style.cssText = `
+                            margin: 0;
+                            color: #333;
+                        `;
+                        captionText.textContent = img.caption;
+                        
+                        captionDiv.appendChild(captionLabel);
+                        captionDiv.appendChild(captionText);
+                        card.appendChild(captionDiv);
+                    }
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerHTML = '🗑️ Delete This Image';
+                    deleteBtn.style.cssText = `
+                        background: #dc3545;
+                        color: white;
+                        border: none;
+                        padding: 12px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        width: 100%;
+                        font-size: 16px;
+                        font-weight: bold;
+                        transition: background 0.3s;
+                    `;
+                    
+                    deleteBtn.onmouseover = () => { deleteBtn.style.background = '#c82333'; };
+                    deleteBtn.onmouseout = () => { deleteBtn.style.background = '#dc3545'; };
+                    deleteBtn.onclick = () => deleteImage(index);
+                    
+                    card.appendChild(deleteBtn);
+                    adminList.appendChild(card);
+                });
+            }
         }
         
     } catch (error) {
         console.error('Gallery error:', error);
-        container.innerHTML = "<p>Error loading gallery. Check your Access Key.</p>";
+        container.innerHTML = "<p style='text-align:center; color:#dc3545;'>Error loading gallery. Check your Master Key.</p>";
     }
-}
-
-// Display public gallery
-function displayPublicGallery(images) {
-    const container = document.getElementById("gallery-container");
-    if (!container) return;
-    
-    container.innerHTML = "";
-    
-    if (images.length === 0) {
-        container.innerHTML = "<p>No images in gallery yet.</p>";
-        return;
-    }
-    
-    container.style.display = 'grid';
-    container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
-    container.style.gap = '20px';
-    
-    images.forEach((img, index) => {
-        const card = document.createElement('div');
-        card.style.backgroundColor = '#fff';
-        card.style.borderRadius = '10px';
-        card.style.overflow = 'hidden';
-        card.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-        card.style.transition = 'transform 0.3s';
-        card.style.cursor = 'pointer';
-        
-        card.onmouseover = () => { card.style.transform = 'scale(1.03)'; };
-        card.onmouseout = () => { card.style.transform = 'scale(1)'; };
-        
-        card.innerHTML = `
-            <img src="${img.data}" alt="${img.caption || ''}" 
-                 style="width:100%; height:250px; object-fit:cover; display:block;">
-            ${img.caption ? 
-                `<div style="padding:15px; text-align:center; font-weight:500; background:linear-gradient(to right, #f8f9fa, #fff);">
-                    ${img.caption}
-                </div>` : 
-                ''
-            }
-            <div style="padding:8px 15px; font-size:12px; color:#666; background:#f8f9fa; border-top:1px solid #eee;">
-                🖼️ Image ${index + 1} • ${img.date || 'No date'}
-            </div>
-        `;
-        
-        container.appendChild(card);
-    });
-}
-
-// Display admin gallery
-function displayAdminGallery(images) {
-    const list = document.getElementById("image-list");
-    if (!list) return;
-    
-    list.innerHTML = "";
-    
-    if (images.length === 0) {
-        list.innerHTML = "<p>No images uploaded yet. Use the form above to add images.</p>";
-        return;
-    }
-    
-    images.forEach((img, index) => {
-        const card = document.createElement('div');
-        card.style.marginBottom = '25px';
-        card.style.padding = '20px';
-        card.style.border = '1px solid #e0e0e0';
-        card.style.borderRadius = '12px';
-        card.style.backgroundColor = '#ffffff';
-        card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
-        
-        card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <span style="background:#007bff; color:white; padding:5px 15px; border-radius:20px; font-size:14px; font-weight:bold;">
-                    Image #${index + 1}
-                </span>
-                <span style="color:#666; font-size:13px;">
-                    📅 ${img.date || 'No date'}
-                </span>
-            </div>
-            
-            <img src="${img.data}" 
-                 style="width:100%; height:200px; object-fit:cover; border-radius:8px; margin-bottom:15px; border:1px solid #eee;">
-            
-            ${img.caption ? 
-                `<div style="background:#f0f7ff; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #007bff;">
-                    <strong style="color:#007bff; display:block; margin-bottom:5px;">📝 Caption:</strong>
-                    ${img.caption}
-                </div>` : 
-                '<p style="color:#999; font-style:italic; margin-bottom:15px;">No caption</p>'
-            }
-            
-            <button onclick="deleteImage(${index})" 
-                    style="background:#dc3545; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; width:100%; font-size:16px; font-weight:bold; transition:background 0.3s;"
-                    onmouseover="this.style.background='#c82333'"
-                    onmouseout="this.style.background='#dc3545'">
-                🗑️ Delete This Image
-            </button>
-        `;
-        
-        list.appendChild(card);
-    });
 }
 
 // Preview image
@@ -324,8 +438,9 @@ window.previewImage = function(event) {
     reader.onload = function(e) {
         preview.innerHTML = `
             <div style="margin-top:15px; padding:10px; background:#f0f7ff; border-radius:8px;">
-                <strong style="color:#007bff;">Preview:</strong>
-                <img src="${e.target.result}" style="max-width:100%; max-height:200px; border-radius:5px; margin-top:10px; border:3px solid #007bff;">
+                <strong style="color:#007bff; display:block; margin-bottom:10px;">Preview:</strong>
+                <img src="${e.target.result}" 
+                     style="max-width:100%; max-height:200px; border-radius:5px; border:3px solid #007bff;">
             </div>
         `;
     };
@@ -345,20 +460,27 @@ window.uploadImage = async function() {
     const messageEl = document.getElementById("galleryMessage");
     
     messageEl.innerHTML = "";
+    messageEl.style.cssText = "margin-top:15px; padding:10px; border-radius:4px;";
     
     if (password !== ADMIN_PASSWORD) {
         messageEl.innerHTML = "❌ Wrong password!";
-        messageEl.style.color = "red";
+        messageEl.style.backgroundColor = "#f8d7da";
+        messageEl.style.color = "#721c24";
         return;
     }
     
     if (!selectedImage) {
         messageEl.innerHTML = "❌ Select an image first!";
-        messageEl.style.color = "red";
+        messageEl.style.backgroundColor = "#f8d7da";
+        messageEl.style.color = "#721c24";
         return;
     }
     
     try {
+        messageEl.innerHTML = "⏳ Uploading...";
+        messageEl.style.backgroundColor = "#cce5ff";
+        messageEl.style.color = "#004085";
+        
         uploadBtn.disabled = true;
         uploadBtn.textContent = "⏳ Uploading...";
         uploadBtn.style.background = '#6c757d';
@@ -370,14 +492,12 @@ window.uploadImage = async function() {
             // Get current images
             const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
                 headers: { 
-                    'X-Access-Key': ACCESS_KEY,
+                    'X-Master-Key': MASTER_KEY,
                     'X-Bin-Meta': 'false'
                 }
             });
             
-            if (!getRes.ok) {
-                throw new Error('Failed to fetch current images');
-            }
+            if (!getRes.ok) throw new Error('Failed to fetch current images');
             
             const data = await getRes.json();
             const images = data.images || [];
@@ -394,7 +514,7 @@ window.uploadImage = async function() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Access-Key': ACCESS_KEY
+                    'X-Master-Key': MASTER_KEY
                 },
                 body: JSON.stringify({ images: images })
             });
@@ -405,13 +525,15 @@ window.uploadImage = async function() {
                 document.getElementById("imageCaption").value = "";
                 document.getElementById("imagePreview").innerHTML = "";
                 document.getElementById("galleryAdminPass").value = "";
+                
                 uploadBtn.textContent = "📤 Upload Image";
                 uploadBtn.style.background = '#28a745';
                 uploadBtn.disabled = true;
                 selectedImage = null;
                 
                 messageEl.innerHTML = "✅ Image uploaded successfully!";
-                messageEl.style.color = "green";
+                messageEl.style.backgroundColor = "#d4edda";
+                messageEl.style.color = "#155724";
                 
                 loadGallery();
                 
@@ -426,7 +548,9 @@ window.uploadImage = async function() {
     } catch (error) {
         console.error('Upload error:', error);
         messageEl.innerHTML = "❌ Upload failed: " + error.message;
-        messageEl.style.color = "red";
+        messageEl.style.backgroundColor = "#f8d7da";
+        messageEl.style.color = "#721c24";
+        
         uploadBtn.disabled = false;
         uploadBtn.textContent = "📤 Upload Image";
         uploadBtn.style.background = '#28a745';
@@ -439,10 +563,12 @@ window.deleteImage = async function(index) {
     const messageEl = document.getElementById("galleryMessage");
     
     messageEl.innerHTML = "";
+    messageEl.style.cssText = "margin-top:15px; padding:10px; border-radius:4px;";
     
     if (password !== ADMIN_PASSWORD) {
         messageEl.innerHTML = "❌ Enter password first!";
-        messageEl.style.color = "red";
+        messageEl.style.backgroundColor = "#f8d7da";
+        messageEl.style.color = "#721c24";
         return;
     }
     
@@ -451,14 +577,12 @@ window.deleteImage = async function(index) {
     try {
         const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
             headers: { 
-                'X-Access-Key': ACCESS_KEY,
+                'X-Master-Key': MASTER_KEY,
                 'X-Bin-Meta': 'false'
             }
         });
         
-        if (!getRes.ok) {
-            throw new Error('Failed to fetch images');
-        }
+        if (!getRes.ok) throw new Error('Failed to fetch images');
         
         const data = await getRes.json();
         const images = data.images || [];
@@ -469,14 +593,16 @@ window.deleteImage = async function(index) {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Access-Key': ACCESS_KEY
+                'X-Master-Key': MASTER_KEY
             },
             body: JSON.stringify({ images: images })
         });
         
         if (putRes.ok) {
             messageEl.innerHTML = "✅ Image deleted!";
-            messageEl.style.color = "green";
+            messageEl.style.backgroundColor = "#d4edda";
+            messageEl.style.color = "#155724";
+            
             loadGallery();
             
             setTimeout(() => {
@@ -489,11 +615,12 @@ window.deleteImage = async function(index) {
     } catch (error) {
         console.error('Delete error:', error);
         messageEl.innerHTML = "❌ Delete failed: " + error.message;
-        messageEl.style.color = "red";
+        messageEl.style.backgroundColor = "#f8d7da";
+        messageEl.style.color = "#721c24";
     }
 };
 
-// ============ INITIALIZE ============
+// ============ INITIALIZE EVERYTHING ============
 document.addEventListener("DOMContentLoaded", function() {
     // Load announcements if element exists
     if (document.getElementById("announcement-list")) {
@@ -504,4 +631,105 @@ document.addEventListener("DOMContentLoaded", function() {
     if (document.getElementById("gallery-container")) {
         loadGallery();
     }
+    
+    // Add global styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .admin-panel {
+            background: #f8f9fa;
+            padding: 30px;
+            margin: 30px auto;
+            border-radius: 12px;
+            max-width: 800px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .admin-panel h2 {
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 28px;
+        }
+        
+        .admin-panel input,
+        .admin-panel textarea,
+        .admin-panel input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        .admin-panel input:focus,
+        .admin-panel textarea:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        
+        .admin-panel button {
+            padding: 12px 25px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background 0.3s;
+        }
+        
+        .admin-panel button:hover {
+            background: #0056b3;
+        }
+        
+        .admin-panel .clear-btn {
+            background: #dc3545;
+        }
+        
+        .admin-panel .clear-btn:hover {
+            background: #c82333;
+        }
+        
+        .image-upload-section {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 2px dashed #007bff;
+        }
+        
+        .image-upload-section h3 {
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        #imagePreview {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .current-images {
+            margin-top: 30px;
+        }
+        
+        .current-images h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        #galleryMessage {
+            margin-top: 20px;
+        }
+        
+        #gallery-container {
+            min-height: 200px;
+        }
+    `;
+    document.head.appendChild(style);
 });

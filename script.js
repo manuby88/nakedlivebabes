@@ -957,3 +957,37 @@ document.querySelectorAll('img').forEach(img => {
 
 console.log('🔒 Screenshot protection enabled');
 
+// Simple test function
+window.testJSONBin = async function() {
+    const result = document.createElement('div');
+    result.style.cssText = 'position:fixed; top:50px; left:10px; background:white; border:2px solid black; padding:20px; z-index:10000; max-width:500px;';
+    
+    try {
+        // Test read
+        const readRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
+            headers: { 
+                'X-Master-Key': MASTER_KEY,
+                'X-Bin-Meta': 'false'
+            }
+        });
+        const readData = await readRes.json();
+        
+        result.innerHTML = `
+            <h3>✅ Test Results:</h3>
+            <p><strong>Read successful!</strong></p>
+            <p>Current images: ${readData.images ? readData.images.length : 0}</p>
+            <p>Bin ID: ${GALLERY_BIN_ID}</p>
+            <p>Master Key: ${MASTER_KEY.substring(0, 20)}...</p>
+            <button onclick="this.parentElement.remove()" style="margin-top:10px;">Close</button>
+        `;
+    } catch (error) {
+        result.innerHTML = `
+            <h3 style="color:red;">❌ Test Failed:</h3>
+            <p>${error.message}</p>
+            <p>Check your Bin ID and Master Key</p>
+            <button onclick="this.parentElement.remove()" style="margin-top:10px;">Close</button>
+        `;
+    }
+    
+    document.body.appendChild(result);
+};

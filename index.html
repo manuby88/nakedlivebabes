@@ -107,20 +107,13 @@
     <input type="password" id="galleryAdminPass" placeholder="Enter Password">
     
     <div class="image-upload-section">
-        <h3>Upload New Image</h3>
-        <input type="file" id="imageUpload" accept="image/*" onchange="previewImage(event)">
-        <input type="text" id="imageCaption" placeholder="Image caption (optional)">
+        <h3>Upload Multiple Images</h3>
+        <input type="file" id="imageUpload" accept="image/*" multiple onchange="previewImages(event)">
+        <input type="text" id="imageCaption" placeholder="Caption (optional - will be numbered)">
         <div id="imagePreview"></div>
-        <button onclick="uploadImage()" id="uploadBtn" disabled>📤 Upload Image</button>
+        <button onclick="uploadImages()" id="uploadBtn" disabled>📤 Upload Images</button>
+        <p class="note"><small>You can select multiple images at once</small></p>
     </div>
-    
-    <div class="current-images">
-        <h3>Current Images</h3>
-        <div id="image-list" class="image-list"></div>
-    </div>
-    
-    <div id="galleryMessage"></div>
-</section></div>
     
     <div class="current-images">
         <h3>Current Images (Click to delete)</h3>
@@ -198,6 +191,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
 

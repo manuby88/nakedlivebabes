@@ -375,10 +375,16 @@ window.previewImage = async function(event) {
 };
 
 // Upload image
+// Add Cloudinary config
+const CLOUDINARY_CONFIG = {
+    cloudName: 'dljtavfop', // Sign up at cloudinary.com
+    uploadPreset: 'nakedlivebabes' // Create in Cloudinary settings
+};
+
+// Update upload function
 window.uploadImage = async function() {
     const password = document.getElementById("galleryAdminPass").value;
     const caption = document.getElementById("imageCaption").value;
-    const uploadBtn = document.getElementById("uploadBtn");
     
     if (password !== ADMIN_PASSWORD) {
         alert("❌ Wrong password!");
@@ -391,79 +397,19 @@ window.uploadImage = async function() {
     }
     
     try {
-        uploadBtn.disabled = true;
-        uploadBtn.textContent = "⏳ Uploading...";
+        // Upload to Cloudinary
+        const formData = new FormData();
+        formData.append('file', selectedImage);
+        formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
         
-        const reader = new FileReader();
-        reader.readAsDataURL(selectedImage);
+        const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`, {
+            method: 'POST',
+            body: formData
+        });
         
-        reader.onloadend = async function() {
-            // Get current images
-            const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-                headers: { 
-                    'X-Master-Key': MASTER_KEY,
-                    'X-Bin-Meta': 'false'
-                }
-            });
-            
-            const data = await getRes.json();
-            const images = data.images || [];
-            
-            // Add new image
-            images.unshift({
-                data: reader.result,
-                caption: caption,
-                date: new Date().toLocaleString()
-            });
-            
-            // Save
-            const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': MASTER_KEY
-                },
-                body: JSON.stringify({ images: images })
-            });
-            
-            if (putRes.ok) {
-                // Clear form
-                document.getElementById("imageUpload").value = "";
-                document.getElementById("imageCaption").value = "";
-                document.getElementById("imagePreview").innerHTML = "";
-                document.getElementById("galleryAdminPass").value = "";
-                uploadBtn.disabled = true;
-                uploadBtn.textContent = "📤 Upload Image";
-                selectedImage = null;
-                
-                alert("✅ Image uploaded!");
-                loadGallery();
-            } else {
-                const errorText = await putRes.text();
-                alert("❌ Upload failed: " + errorText);
-            }
-        };
+        const cloudinaryData = await cloudinaryRes.json();
         
-    } catch (error) {
-        console.error('Error:', error);
-        alert("❌ Upload failed: " + error.message);
-        uploadBtn.disabled = false;
-        uploadBtn.textContent = "📤 Upload Image";
-    }
-};
-
-// Delete image
-window.deleteImage = async function(index) {
-    const password = document.getElementById("galleryAdminPass").value;
-    
-    if (password !== ADMIN_PASSWORD) {
-        alert("❌ Enter password first!");
-        return;
-    }
-    
-    if (!confirm("Delete this image?")) return;
-    
-    try {
+        // Save ONLY the URL to JSONBin (very small)
         const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
             headers: { 'X-Master-Key': MASTER_KEY }
         });
@@ -471,8 +417,13 @@ window.deleteImage = async function(index) {
         const data = await getRes.json();
         const images = data.images || [];
         
-        images.splice(index, 1);
+        images.unshift({
+            url: cloudinaryData.secure_url,
+            caption: caption,
+            date: new Date().toLocaleString()
+        });
         
+        // Save to JSONBin
         await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
             method: 'PUT',
             headers: {
@@ -482,12 +433,12 @@ window.deleteImage = async function(index) {
             body: JSON.stringify({ images: images })
         });
         
-        alert("✅ Image deleted!");
+        alert("✅ Image uploaded to Cloudinary!");
         loadGallery();
         
     } catch (error) {
         console.error('Error:', error);
-        alert("❌ Delete failed");
+        alert("Upload failed: " + error.message);
     }
 };
 
@@ -525,5 +476,6 @@ window.testJSONBin = async function() {
     
     document.body.appendChild(result);
 };
+
 
 

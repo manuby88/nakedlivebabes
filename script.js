@@ -1,4 +1,17 @@
+// ============ TEMPORARY: DISABLE PROTECTION FOR TESTING ============
+// Remove this after testing!
 
+// Remove all keyboard event listeners
+document.removeEventListener('keydown', function(){});
+document.removeEventListener('contextmenu', function(){});
+
+// Re-enable right click
+document.oncontextmenu = null;
+
+// Re-enable F12 and dev tools
+document.onkeydown = null;
+
+console.log('🔓 Protection disabled for testing');
 // ============ CONFIGURATION ============
 // REPLACE WITH YOUR ACTUAL VALUES
 const MASTER_KEY = '$2a$10$/73BHVkiHDdroKUGU7j2JuqgjESyGWvbXU3iU.piqoZTj4uUA4moi'; // Your master key
@@ -943,3 +956,4 @@ document.querySelectorAll('img').forEach(img => {
 });
 
 console.log('🔒 Screenshot protection enabled');
+

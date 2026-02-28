@@ -312,6 +312,68 @@ window.previewImage = function(event) {
     uploadBtn.disabled = false;
 };
 
+// Add this function to compress images
+function compressImage(file, maxSize = 100 * 1024) { // 100KB max
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                // Calculate new dimensions (max 800px width)
+                const maxWidth = 800;
+                if (width > maxWidth) {
+                    height = (maxWidth * height) / width;
+                    width = maxWidth;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Compress to JPEG at 70% quality
+                canvas.toBlob((blob) => {
+                    resolve(blob);
+                }, 'image/jpeg', 0.7);
+            };
+        };
+        reader.onerror = reject;
+    });
+}
+
+// Update your previewImage function
+window.previewImage = async function(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById("imagePreview");
+    const uploadBtn = document.getElementById("uploadBtn");
+    
+    if (!file) return;
+    
+    try {
+        // Compress the image
+        const compressedBlob = await compressImage(file);
+        selectedImage = compressedBlob;
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = e => {
+            preview.innerHTML = `<img src="${e.target.result}" style="max-width:100%; max-height:200px; border:2px solid green;"><p style="color:green;">✅ Image compressed successfully!</p>`;
+        };
+        reader.readAsDataURL(compressedBlob);
+        
+        uploadBtn.disabled = false;
+    } catch (error) {
+        alert("Error compressing image: " + error.message);
+    }
+};
+
 // Upload image
 window.uploadImage = async function() {
     const password = document.getElementById("galleryAdminPass").value;
@@ -463,4 +525,5 @@ window.testJSONBin = async function() {
     
     document.body.appendChild(result);
 };
+
 

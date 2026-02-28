@@ -378,8 +378,8 @@ window.previewImage = async function(event) {
 // ============ CLOUDINARY GALLERY ============
 // Replace with your Cloudinary credentials
 const CLOUDINARY_CONFIG = {
-    cloudName: 'YOUR_CLOUD_NAME', // Your cloud name from Cloudinary
-    uploadPreset: 'YOUR_UPLOAD_PRESET' // Your upload preset
+    cloudName: 'dIjtavfop', // Your cloud name from Cloudinary
+    uploadPreset: 'nakedlivebabes' // Your upload preset
 };
 
 let selectedImages = []; // Changed to array for multiple images
@@ -758,6 +758,7 @@ window.testJSONBin = async function() {
     
     document.body.appendChild(result);
 };
+
 
 
 

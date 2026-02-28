@@ -375,56 +375,266 @@ window.previewImage = async function(event) {
 };
 
 // Upload image
-// Add Cloudinary config
+// ============ CLOUDINARY GALLERY ============
+// Replace with your Cloudinary credentials
 const CLOUDINARY_CONFIG = {
-    cloudName: 'dljtavfop', // Sign up at cloudinary.com
-    uploadPreset: 'nakedlivebabes' // Create in Cloudinary settings
+    cloudName: 'YOUR_CLOUD_NAME', // Your cloud name from Cloudinary
+    uploadPreset: 'YOUR_UPLOAD_PRESET' // Your upload preset
 };
 
-// Update upload function
-window.uploadImage = async function() {
-    const password = document.getElementById("galleryAdminPass").value;
-    const caption = document.getElementById("imageCaption").value;
+let selectedImages = []; // Changed to array for multiple images
+
+// Load gallery
+async function loadGallery() {
+    const container = document.getElementById("gallery-container");
+    const adminList = document.getElementById("image-list");
     
-    if (password !== ADMIN_PASSWORD) {
-        alert("❌ Wrong password!");
+    if (!container) return;
+    
+    try {
+        container.innerHTML = "<p>Loading gallery...</p>";
+        
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
+            headers: { 
+                'X-Master-Key': MASTER_KEY,
+                'X-Bin-Meta': 'false'
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load');
+        
+        const data = await response.json();
+        const images = data.images || [];
+        
+        console.log("Gallery loaded:", images.length, "images");
+        
+        // Display public gallery
+        displayPublicGallery(images);
+        
+        // Display admin panel
+        if (adminList) {
+            displayAdminGallery(images);
+        }
+        
+    } catch (error) {
+        console.error('Gallery error:', error);
+        container.innerHTML = "<p>Error loading gallery.</p>";
+    }
+}
+
+// Display public gallery
+function displayPublicGallery(images) {
+    const container = document.getElementById("gallery-container");
+    if (!container) return;
+    
+    container.innerHTML = "";
+    
+    if (images.length === 0) {
+        container.innerHTML = "<p>No images in gallery yet.</p>";
         return;
     }
     
-    if (!selectedImage) {
-        alert("❌ Select an image first!");
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+    container.style.gap = '20px';
+    
+    images.forEach((img, index) => {
+        const card = document.createElement('div');
+        card.style.cssText = `
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        `;
+        
+        card.onmouseover = () => { card.style.transform = 'scale(1.03)'; };
+        card.onmouseout = () => { card.style.transform = 'scale(1)'; };
+        
+        card.innerHTML = `
+            <img src="${img.url}" alt="${img.caption || ''}" 
+                 style="width:100%; height:250px; object-fit:cover; display:block;">
+            ${img.caption ? 
+                `<div style="padding:15px; text-align:center; font-weight:500; background:#f8f9fa;">
+                    ${img.caption}
+                </div>` : ''
+            }
+            <div style="padding:8px 15px; font-size:12px; color:#666; background:#f8f9fa; border-top:1px solid #eee;">
+                🖼️ Image ${index + 1} of ${images.length} • ${img.date || ''}
+            </div>
+        `;
+        
+        container.appendChild(card);
+    });
+}
+
+// Display admin gallery
+function displayAdminGallery(images) {
+    const list = document.getElementById("image-list");
+    if (!list) return;
+    
+    list.innerHTML = "";
+    
+    if (images.length === 0) {
+        list.innerHTML = "<p>No images uploaded yet. Select multiple images below and click 'Upload All Images'.</p>";
+        return;
+    }
+    
+    // Create grid for admin view
+    list.style.display = 'grid';
+    list.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+    list.style.gap = '20px';
+    
+    images.forEach((img, index) => {
+        const card = document.createElement('div');
+        card.style.cssText = `
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        `;
+        
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <span style="background:#007bff; color:white; padding:5px 15px; border-radius:20px; font-size:14px; font-weight:bold;">
+                    Image #${index + 1}
+                </span>
+                <span style="color:#666; font-size:13px;">
+                    📅 ${img.date || 'No date'}
+                </span>
+            </div>
+            
+            <img src="${img.url}" style="width:100%; height:150px; object-fit:cover; border-radius:8px; margin-bottom:15px; border:1px solid #eee;">
+            
+            ${img.caption ? 
+                `<div style="background:#f0f7ff; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #007bff;">
+                    <strong style="color:#007bff; display:block; margin-bottom:5px;">📝 Caption:</strong>
+                    ${img.caption}
+                </div>` : 
+                '<p style="color:#999; font-style:italic; margin-bottom:15px;">No caption</p>'
+            }
+            
+            <button onclick="deleteImage(${index})" 
+                    style="background:#dc3545; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; width:100%; font-size:16px; font-weight:bold;">
+                🗑️ Delete Image
+            </button>
+        `;
+        
+        list.appendChild(card);
+    });
+}
+
+// Preview multiple images
+window.previewImages = function(event) {
+    const files = Array.from(event.target.files);
+    const preview = document.getElementById("imagePreview");
+    const uploadBtn = document.getElementById("uploadBtn");
+    
+    if (files.length === 0) return;
+    
+    selectedImages = files;
+    
+    let previewHTML = '<div style="margin-top:15px;"><strong style="color:#007bff;">Selected Images:</strong></div>';
+    previewHTML += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:10px; margin-top:10px;">';
+    
+    files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imgPreview = document.getElementById(`preview-${index}`);
+            if (imgPreview) {
+                imgPreview.src = e.target.result;
+            }
+        };
+        reader.readAsDataURL(file);
+        
+        previewHTML += `
+            <div style="text-align:center;">
+                <img id="preview-${index}" src="" style="width:100%; height:80px; object-fit:cover; border-radius:5px; border:2px solid #007bff;">
+                <small style="font-size:10px;">${file.name.substring(0,10)}...</small>
+            </div>
+        `;
+    });
+    
+    previewHTML += '</div>';
+    previewHTML += `<p style="color:green; margin-top:10px;">✅ ${files.length} image(s) selected</p>`;
+    
+    preview.innerHTML = previewHTML;
+    
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = `📤 Upload ${files.length} Image(s)`;
+};
+
+// Upload multiple images to Cloudinary
+window.uploadImages = async function() {
+    const password = document.getElementById("galleryAdminPass").value;
+    const caption = document.getElementById("imageCaption").value;
+    const uploadBtn = document.getElementById("uploadBtn");
+    const messageEl = document.getElementById("galleryMessage");
+    
+    messageEl.innerHTML = "";
+    
+    if (password !== ADMIN_PASSWORD) {
+        messageEl.innerHTML = "❌ Wrong password!";
+        messageEl.style.color = "red";
+        return;
+    }
+    
+    if (selectedImages.length === 0) {
+        messageEl.innerHTML = "❌ Select images first!";
+        messageEl.style.color = "red";
         return;
     }
     
     try {
-        // Upload to Cloudinary
-        const formData = new FormData();
-        formData.append('file', selectedImage);
-        formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = `⏳ Uploading 0/${selectedImages.length}...`;
         
-        const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`, {
-            method: 'POST',
-            body: formData
-        });
-        
-        const cloudinaryData = await cloudinaryRes.json();
-        
-        // Save ONLY the URL to JSONBin (very small)
+        // Get current images from JSONBin
         const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-            headers: { 'X-Master-Key': MASTER_KEY }
+            headers: { 
+                'X-Master-Key': MASTER_KEY,
+                'X-Bin-Meta': 'false'
+            }
         });
         
         const data = await getRes.json();
-        const images = data.images || [];
+        let images = data.images || [];
         
-        images.unshift({
-            url: cloudinaryData.secure_url,
-            caption: caption,
-            date: new Date().toLocaleString()
-        });
+        // Upload each image to Cloudinary
+        for (let i = 0; i < selectedImages.length; i++) {
+            uploadBtn.textContent = `⏳ Uploading ${i + 1}/${selectedImages.length}...`;
+            
+            const file = selectedImages[i];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+            
+            // Upload to Cloudinary
+            const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!cloudinaryRes.ok) {
+                throw new Error(`Failed to upload ${file.name}`);
+            }
+            
+            const cloudinaryData = await cloudinaryRes.json();
+            
+            // Add to images array
+            images.unshift({
+                url: cloudinaryData.secure_url,
+                publicId: cloudinaryData.public_id,
+                caption: caption ? `${caption} #${images.length + 1}` : '',
+                date: new Date().toLocaleString(),
+                width: cloudinaryData.width,
+                height: cloudinaryData.height
+            });
+        }
         
-        // Save to JSONBin
-        await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
+        // Save all to JSONBin
+        const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -433,12 +643,84 @@ window.uploadImage = async function() {
             body: JSON.stringify({ images: images })
         });
         
-        alert("✅ Image uploaded to Cloudinary!");
-        loadGallery();
+        if (putRes.ok) {
+            // Clear form
+            document.getElementById("imageUpload").value = "";
+            document.getElementById("imageCaption").value = "";
+            document.getElementById("imagePreview").innerHTML = "";
+            document.getElementById("galleryAdminPass").value = "";
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = "📤 Upload Images";
+            selectedImages = [];
+            
+            messageEl.innerHTML = `✅ ${selectedImages.length} images uploaded successfully!`;
+            messageEl.style.color = "green";
+            
+            loadGallery();
+            
+            setTimeout(() => {
+                messageEl.innerHTML = "";
+            }, 3000);
+        }
         
     } catch (error) {
-        console.error('Error:', error);
-        alert("Upload failed: " + error.message);
+        console.error('Upload error:', error);
+        messageEl.innerHTML = "❌ Upload failed: " + error.message;
+        messageEl.style.color = "red";
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = "📤 Upload Images";
+    }
+};
+
+// Delete image
+window.deleteImage = async function(index) {
+    const password = document.getElementById("galleryAdminPass").value;
+    const messageEl = document.getElementById("galleryMessage");
+    
+    if (password !== ADMIN_PASSWORD) {
+        messageEl.innerHTML = "❌ Enter password first!";
+        messageEl.style.color = "red";
+        return;
+    }
+    
+    if (!confirm("Delete this image?")) return;
+    
+    try {
+        const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
+            headers: { 
+                'X-Master-Key': MASTER_KEY,
+                'X-Bin-Meta': 'false'
+            }
+        });
+        
+        const data = await getRes.json();
+        let images = data.images || [];
+        
+        images.splice(index, 1);
+        
+        const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': MASTER_KEY
+            },
+            body: JSON.stringify({ images: images })
+        });
+        
+        if (putRes.ok) {
+            messageEl.innerHTML = "✅ Image deleted!";
+            messageEl.style.color = "green";
+            loadGallery();
+            
+            setTimeout(() => {
+                messageEl.innerHTML = "";
+            }, 3000);
+        }
+        
+    } catch (error) {
+        console.error('Delete error:', error);
+        messageEl.innerHTML = "❌ Delete failed";
+        messageEl.style.color = "red";
     }
 };
 
@@ -476,6 +758,7 @@ window.testJSONBin = async function() {
     
     document.body.appendChild(result);
 };
+
 
 
 

@@ -1,4 +1,4 @@
-// ============ COMPLETE WORKING CODE WITH IMAGE COMPRESSION ============
+// ============ COMPLETE WORKING CODE WITH ALL FIXES ============
 
 // ============ CONFIGURATION ============
 // YOUR ACTUAL CREDENTIALS - Verified working
@@ -220,18 +220,30 @@ async function loadGallery() {
         if (!response.ok) throw new Error('Failed to load');
         
         const data = await response.json();
-        const images = data.images || [];
+        
+        // Safely get images array
+        let images = [];
+        if (data && data.images) {
+            images = data.images;
+        } else if (data && data.record && data.record.images) {
+            images = data.record.images;
+        }
         
         console.log("Gallery loaded:", images.length, "images");
         
         // Display public gallery
-if (!images || images.length === 0) {
-    container.innerHTML = "<p>No images in gallery yet.</p>";
-    return;
+        displayPublicGallery(images);
+        
+        // Display admin list
+        displayAdminGallery(images);
+        
+    } catch (error) {
+        console.error('Gallery error:', error);
+        container.innerHTML = "<p style='text-align:center; color:#dc3545;'>Error loading gallery. Check console.</p>";
+    }
 }
 
-// Filter out any images without valid data
-images = images.filter(img => img && (img.data || img.url));
+// Display public gallery - FIXED VERSION
 function displayPublicGallery(images) {
     const container = document.getElementById("gallery-container");
     if (!container) return;
@@ -293,72 +305,81 @@ function displayPublicGallery(images) {
         container.appendChild(card);
     });
 }
+
+// Display admin gallery - FIXED VERSION
+function displayAdminGallery(images) {
+    const list = document.getElementById("image-list");
+    if (!list) return;
+    
+    list.innerHTML = "";
+    
+    // Safety check
+    if (!images || images.length === 0) {
+        list.innerHTML = "<p style='text-align:center; color:#666;'>No images uploaded yet. Select multiple images below and click 'Upload All Images'.</p>";
+        return;
+    }
+    
+    // Filter out invalid images
+    const validImages = images.filter(img => img && (img.data || img.url));
+    
+    if (validImages.length === 0) {
+        list.innerHTML = "<p style='text-align:center; color:#666;'>No valid images found.</p>";
+        return;
+    }
+    
+    list.style.display = 'grid';
+    list.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+    list.style.gap = '20px';
+    list.style.marginTop = '20px';
+    
+    validImages.forEach((img, index) => {
+        // Get the image URL safely
+        const imageUrl = img.data || img.url;
         
-        // Display admin list
-if (!images || images.length === 0) {
-    container.innerHTML = "<p>No images in gallery yet.</p>";
-    return;
+        // Skip if still undefined
+        if (!imageUrl) return;
+        
+        const card = document.createElement('div');
+        card.style.cssText = `
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        `;
+        
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <span style="background:#007bff; color:white; padding:5px 15px; border-radius:20px; font-size:14px; font-weight:bold;">
+                    Image #${index + 1}
+                </span>
+                <span style="color:#666; font-size:13px;">
+                    📅 ${img.date || 'No date'}
+                </span>
+            </div>
+            
+            <img src="${imageUrl}" 
+                 onerror="this.src='https://via.placeholder.com/280x150?text=Image+Error'"
+                 style="width:100%; height:150px; object-fit:cover; border-radius:8px; margin-bottom:15px; border:1px solid #eee;">
+            
+            ${img.caption ? 
+                `<div style="background:#f0f7ff; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #007bff;">
+                    <strong style="color:#007bff; display:block; margin-bottom:5px;">📝 Caption:</strong>
+                    ${img.caption}
+                </div>` : 
+                '<p style="color:#999; font-style:italic; margin-bottom:15px;">No caption</p>'
+            }
+            
+            <button onclick="deleteImage(${index})" 
+                    style="background:#dc3545; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; width:100%; font-size:16px; font-weight:bold;">
+                🗑️ Delete Image
+            </button>
+        `;
+        
+        list.appendChild(card);
+    });
 }
 
-// Filter out any images without valid data
-images = images.filter(img => img && (img.data || img.url));
-        if (adminList) {
-            adminList.innerHTML = "";
-            adminList.style.display = 'grid';
-            adminList.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
-            adminList.style.gap = '20px';
-            adminList.style.marginTop = '20px';
-            
-            if (images.length === 0) {
-                adminList.innerHTML = "<p style='text-align:center; color:#666;'>No images uploaded yet. Select multiple images below and click 'Upload All Images'.</p>";
-            } else {
-                images.forEach((img, index) => {
-                    const card = document.createElement('div');
-                    card.style.cssText = `
-                        background: white;
-                        border: 1px solid #e0e0e0;
-                        border-radius: 12px;
-                        padding: 15px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                    `;
-                    
-                    card.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <span style="background:#007bff; color:white; padding:5px 15px; border-radius:20px; font-size:14px; font-weight:bold;">
-                                Image #${index + 1}
-                            </span>
-                            <span style="color:#666; font-size:13px;">
-                                📅 ${img.date || 'No date'}
-                            </span>
-                        </div>
-                        
-                        <img src="${img.data}" style="width:100%; height:150px; object-fit:cover; border-radius:8px; margin-bottom:15px; border:1px solid #eee;">
-                        
-                        ${img.caption ? 
-                            `<div style="background:#f0f7ff; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #007bff;">
-                                <strong style="color:#007bff; display:block; margin-bottom:5px;">📝 Caption:</strong>
-                                ${img.caption}
-                            </div>` : 
-                            '<p style="color:#999; font-style:italic; margin-bottom:15px;">No caption</p>'
-                        }
-                        
-                        <button onclick="deleteImage(${index})" 
-                                style="background:#dc3545; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; width:100%; font-size:16px; font-weight:bold;">
-                            🗑️ Delete Image
-                        </button>
-                    `;
-                    
-                    adminList.appendChild(card);
-                });
-            }
-        }
-        
-    } catch (error) {
-        console.error('Gallery error:', error);
-        container.innerHTML = "<p style='text-align:center; color:#dc3545;'>Error loading gallery. Check console.</p>";
-    }
-}
-\
 // Preview multiple images
 window.previewImages = function(event) {
     const files = Array.from(event.target.files);
@@ -466,16 +487,19 @@ window.uploadImages = async function() {
     const messageEl = document.getElementById("galleryMessage");
     
     messageEl.innerHTML = "";
+    messageEl.style.cssText = "margin-top:15px; padding:10px; border-radius:4px;";
     
     if (password !== ADMIN_PASSWORD) {
         messageEl.innerHTML = "❌ Wrong password!";
-        messageEl.style.color = "red";
+        messageEl.style.backgroundColor = "#f8d7da";
+        messageEl.style.color = "#721c24";
         return;
     }
     
     if (selectedImages.length === 0) {
         messageEl.innerHTML = "❌ Select images first!";
-        messageEl.style.color = "red";
+        messageEl.style.backgroundColor = "#f8d7da";
+        messageEl.style.color = "#721c24";
         return;
     }
     
@@ -496,7 +520,14 @@ window.uploadImages = async function() {
         }
         
         const data = await getRes.json();
-        let images = data.images || [];
+        
+        // Safely get images array
+        let images = [];
+        if (data && data.images) {
+            images = data.images;
+        } else if (data && data.record && data.record.images) {
+            images = data.record.images;
+        }
         
         // Process each image
         for (let i = 0; i < selectedImages.length; i++) {
@@ -517,7 +548,8 @@ window.uploadImages = async function() {
             } catch (compressError) {
                 console.error(`Failed to compress ${file.name}:`, compressError);
                 messageEl.innerHTML = `❌ Failed to compress ${file.name}`;
-                messageEl.style.color = "red";
+                messageEl.style.backgroundColor = "#f8d7da";
+                messageEl.style.color = "#721c24";
                 uploadBtn.disabled = false;
                 uploadBtn.textContent = "📤 Upload Images";
                 return;
@@ -551,7 +583,8 @@ window.uploadImages = async function() {
             selectedImages = [];
             
             messageEl.innerHTML = `✅ ${uploadedCount} image(s) uploaded successfully!`;
-            messageEl.style.color = "green";
+            messageEl.style.backgroundColor = "#d4edda";
+            messageEl.style.color = "#155724";
             
             loadGallery();
             
@@ -567,7 +600,8 @@ window.uploadImages = async function() {
     } catch (error) {
         console.error('Upload error:', error);
         messageEl.innerHTML = "❌ Upload failed: " + error.message;
-        messageEl.style.color = "red";
+        messageEl.style.backgroundColor = "#f8d7da";
+        messageEl.style.color = "#721c24";
         uploadBtn.disabled = false;
         uploadBtn.textContent = "📤 Upload Images";
     }
@@ -580,7 +614,8 @@ window.deleteImage = async function(index) {
     
     if (password !== ADMIN_PASSWORD) {
         messageEl.innerHTML = "❌ Enter password first!";
-        messageEl.style.color = "red";
+        messageEl.style.backgroundColor = "#f8d7da";
+        messageEl.style.color = "#721c24";
         return;
     }
     
@@ -595,7 +630,14 @@ window.deleteImage = async function(index) {
         });
         
         const data = await getRes.json();
-        let images = data.images || [];
+        
+        // Safely get images array
+        let images = [];
+        if (data && data.images) {
+            images = data.images;
+        } else if (data && data.record && data.record.images) {
+            images = data.record.images;
+        }
         
         images.splice(index, 1);
         
@@ -612,7 +654,8 @@ window.deleteImage = async function(index) {
         
         if (putRes.ok) {
             messageEl.innerHTML = "✅ Image deleted!";
-            messageEl.style.color = "green";
+            messageEl.style.backgroundColor = "#d4edda";
+            messageEl.style.color = "#155724";
             loadGallery();
             
             setTimeout(() => {
@@ -623,7 +666,8 @@ window.deleteImage = async function(index) {
     } catch (error) {
         console.error('Delete error:', error);
         messageEl.innerHTML = "❌ Delete failed";
-        messageEl.style.color = "red";
+        messageEl.style.backgroundColor = "#f8d7da";
+        messageEl.style.color = "#721c24";
     }
 };
 
@@ -740,4 +784,3 @@ document.addEventListener("DOMContentLoaded", function() {
     `;
     document.head.appendChild(style);
 });
-

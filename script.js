@@ -1,17 +1,11 @@
-// ============ COMPLETE WORKING CODE WITH YOUR ACTUAL CREDENTIALS ============
+// ============ COMPLETE WORKING CODE WITH IMAGE COMPRESSION ============
 
 // ============ CONFIGURATION ============
-// YOUR ACTUAL CREDENTIALS - DO NOT CHANGE THESE
+// YOUR ACTUAL CREDENTIALS - Verified working
 const MASTER_KEY = '$2a$10$2CQWh0cZYZXJH3XHacRx4ukhljFJggfi95zCzMa//feZ/O.IBf1oC';
 const BIN_ID = '699881a243b1c97be98eaf4d';
 const GALLERY_BIN_ID = '69a04e22ae596e708f4c3ca2';
 const ADMIN_PASSWORD = 'kojja emma';
-
-// CLOUDINARY CONFIGURATION - YOU NEED TO ADD YOUR ACTUAL CLOUDINARY VALUES HERE
-const CLOUDINARY_CONFIG = {
-    cloudName: 'dljtavfop', // ← YOU MUST REPLACE THIS with your Cloudinary cloud name
-    uploadPreset: 'nakedlivebabes' // ← YOU MUST REPLACE THIS with your Cloudinary upload preset
-};
 
 // ============ ANNOUNCEMENT FUNCTIONS ============
 
@@ -126,7 +120,9 @@ async function postAnnouncement() {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Master-Key': MASTER_KEY
+                'X-Master-Key': MASTER_KEY,
+                'X-Bin-Meta': 'false',
+                'X-Bin-Versioning': 'false'
             },
             body: JSON.stringify({ announcements: announcements })
         });
@@ -174,7 +170,9 @@ async function clearAnnouncements() {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Master-Key': MASTER_KEY
+                'X-Master-Key': MASTER_KEY,
+                'X-Bin-Meta': 'false',
+                'X-Bin-Versioning': 'false'
             },
             body: JSON.stringify({ announcements: [] })
         });
@@ -199,7 +197,7 @@ async function clearAnnouncements() {
     }
 }
 
-// ============ GALLERY FUNCTIONS WITH CLOUDINARY ============
+// ============ GALLERY FUNCTIONS WITH IMAGE COMPRESSION ============
 let selectedImages = [];
 
 // Load gallery
@@ -250,10 +248,8 @@ async function loadGallery() {
                 card.onmouseover = () => { card.style.transform = 'scale(1.03)'; };
                 card.onmouseout = () => { card.style.transform = 'scale(1)'; };
                 
-                let imageUrl = img.url || img.data;
-                
                 card.innerHTML = `
-                    <img src="${imageUrl}" alt="${img.caption || ''}" 
+                    <img src="${img.data}" alt="${img.caption || ''}" 
                          style="width:100%; height:250px; object-fit:cover; display:block;">
                     ${img.caption ? 
                         `<div style="padding:15px; text-align:center; font-weight:500; background:#f8f9fa;">
@@ -290,8 +286,6 @@ async function loadGallery() {
                         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
                     `;
                     
-                    let imageUrl = img.url || img.data;
-                    
                     card.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                             <span style="background:#007bff; color:white; padding:5px 15px; border-radius:20px; font-size:14px; font-weight:bold;">
@@ -302,7 +296,7 @@ async function loadGallery() {
                             </span>
                         </div>
                         
-                        <img src="${imageUrl}" style="width:100%; height:150px; object-fit:cover; border-radius:8px; margin-bottom:15px; border:1px solid #eee;">
+                        <img src="${img.data}" style="width:100%; height:150px; object-fit:cover; border-radius:8px; margin-bottom:15px; border:1px solid #eee;">
                         
                         ${img.caption ? 
                             `<div style="background:#f0f7ff; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #007bff;">
@@ -369,11 +363,9 @@ window.previewImages = function(event) {
     uploadBtn.textContent = `📤 Upload ${files.length} Image(s)`;
 };
 
-// Upload multiple images
-// Add this compression function BEFORE uploadImages
+// Compress image function
 function compressImage(file, maxSizeKB = 90) {
     return new Promise((resolve, reject) => {
-        // Show which file is being compressed
         console.log(`Compressing: ${file.name} (${(file.size / 1024).toFixed(2)}KB)`);
         
         const reader = new FileReader();
@@ -384,7 +376,6 @@ function compressImage(file, maxSizeKB = 90) {
             img.src = e.target.result;
             
             img.onload = () => {
-                // Start with original dimensions
                 let width = img.width;
                 let height = img.height;
                 
@@ -395,7 +386,6 @@ function compressImage(file, maxSizeKB = 90) {
                     width = maxWidth;
                 }
                 
-                // Create canvas for compression
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
@@ -403,25 +393,23 @@ function compressImage(file, maxSizeKB = 90) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // Start with 80% quality, reduce if still too large
                 let quality = 0.8;
                 let compressedDataUrl;
                 
                 const attemptCompression = () => {
                     compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
                     
-                    // Calculate size (base64 is ~33% larger than binary)
+                    // Calculate size
                     const base64Size = Math.round((compressedDataUrl.length * 3) / 4);
                     const sizeInKB = base64Size / 1024;
                     
                     console.log(`  Quality ${quality}: ${sizeInKB.toFixed(2)}KB`);
                     
-                    // If still too large and quality > 0.3, reduce quality and try again
                     if (sizeInKB > maxSizeKB && quality > 0.3) {
                         quality -= 0.1;
                         attemptCompression();
                     } else {
-                        console.log(`✅ Final size: ${sizeInKB.toFixed(2)}KB (quality: ${quality})`);
+                        console.log(`✅ Final size: ${sizeInKB.toFixed(2)}KB`);
                         resolve(compressedDataUrl);
                     }
                 };
@@ -430,14 +418,11 @@ function compressImage(file, maxSizeKB = 90) {
             };
         };
         
-        reader.onerror = (error) => {
-            console.error('Error reading file:', error);
-            reject(error);
-        };
+        reader.onerror = reject;
     });
 }
 
-// Replace your existing uploadImages function with this:
+// Upload multiple images with compression
 window.uploadImages = async function() {
     const password = document.getElementById("galleryAdminPass").value;
     const caption = document.getElementById("imageCaption").value;
@@ -460,7 +445,7 @@ window.uploadImages = async function() {
     
     try {
         uploadBtn.disabled = true;
-        uploadBtn.textContent = `⏳ Compressing 0/${selectedImages.length}...`;
+        uploadBtn.textContent = `⏳ Processing 0/${selectedImages.length}...`;
         
         // Get current images from JSONBin
         const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
@@ -477,24 +462,22 @@ window.uploadImages = async function() {
         const data = await getRes.json();
         let images = data.images || [];
         
-        // Process each image: compress then upload
+        // Process each image
         for (let i = 0; i < selectedImages.length; i++) {
-            uploadBtn.textContent = `⏳ Processing ${i + 1}/${selectedImages.length}...`;
+            uploadBtn.textContent = `⏳ Compressing ${i + 1}/${selectedImages.length}...`;
             
             const file = selectedImages[i];
             
             try {
-                // Compress the image
                 const compressedBase64 = await compressImage(file);
                 
-                // Add to images array
                 images.unshift({
                     data: compressedBase64,
                     caption: caption ? `${caption} #${images.length + 1}` : '',
                     date: new Date().toLocaleString()
                 });
                 
-                console.log(`✅ Image ${i + 1} compressed and ready`);
+                console.log(`✅ Image ${i + 1} ready`);
             } catch (compressError) {
                 console.error(`Failed to compress ${file.name}:`, compressError);
                 messageEl.innerHTML = `❌ Failed to compress ${file.name}`;
@@ -505,7 +488,7 @@ window.uploadImages = async function() {
             }
         }
         
-        // Save all to JSONBin with proper headers
+        // Save all to JSONBin
         uploadBtn.textContent = `⏳ Saving to gallery...`;
         
         const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
@@ -551,6 +534,60 @@ window.uploadImages = async function() {
         messageEl.style.color = "red";
         uploadBtn.disabled = false;
         uploadBtn.textContent = "📤 Upload Images";
+    }
+};
+
+// Delete image
+window.deleteImage = async function(index) {
+    const password = document.getElementById("galleryAdminPass").value;
+    const messageEl = document.getElementById("galleryMessage");
+    
+    if (password !== ADMIN_PASSWORD) {
+        messageEl.innerHTML = "❌ Enter password first!";
+        messageEl.style.color = "red";
+        return;
+    }
+    
+    if (!confirm("Delete this image?")) return;
+    
+    try {
+        const getRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
+            headers: { 
+                'X-Master-Key': MASTER_KEY,
+                'X-Bin-Meta': 'false'
+            }
+        });
+        
+        const data = await getRes.json();
+        let images = data.images || [];
+        
+        images.splice(index, 1);
+        
+        const putRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': MASTER_KEY,
+                'X-Bin-Meta': 'false',
+                'X-Bin-Versioning': 'false'
+            },
+            body: JSON.stringify({ images: images })
+        });
+        
+        if (putRes.ok) {
+            messageEl.innerHTML = "✅ Image deleted!";
+            messageEl.style.color = "green";
+            loadGallery();
+            
+            setTimeout(() => {
+                messageEl.innerHTML = "";
+            }, 3000);
+        }
+        
+    } catch (error) {
+        console.error('Delete error:', error);
+        messageEl.innerHTML = "❌ Delete failed";
+        messageEl.style.color = "red";
     }
 };
 
@@ -667,7 +704,3 @@ document.addEventListener("DOMContentLoaded", function() {
     `;
     document.head.appendChild(style);
 });
-
-
-
-

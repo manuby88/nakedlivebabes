@@ -225,47 +225,83 @@ async function loadGallery() {
         console.log("Gallery loaded:", images.length, "images");
         
         // Display public gallery
-        container.innerHTML = "";
+if (!images || images.length === 0) {
+    container.innerHTML = "<p>No images in gallery yet.</p>";
+    return;
+}
+
+// Filter out any images without valid data
+images = images.filter(img => img && (img.data || img.url));
+function displayPublicGallery(images) {
+    const container = document.getElementById("gallery-container");
+    if (!container) return;
+    
+    container.innerHTML = "";
+    
+    // Safety check
+    if (!images || images.length === 0) {
+        container.innerHTML = "<p style='text-align:center; color:#666;'>No images in gallery yet.</p>";
+        return;
+    }
+    
+    // Filter out invalid images
+    const validImages = images.filter(img => img && (img.data || img.url));
+    
+    if (validImages.length === 0) {
+        container.innerHTML = "<p style='text-align:center; color:#666;'>No valid images found.</p>";
+        return;
+    }
+    
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+    container.style.gap = '20px';
+    container.style.padding = '20px';
+    
+    validImages.forEach((img, index) => {
+        // Get the image URL safely
+        const imageUrl = img.data || img.url;
         
-        if (images.length === 0) {
-            container.innerHTML = "<p style='text-align:center; color:#666;'>No images in gallery yet.</p>";
-        } else {
-            container.style.display = 'grid';
-            container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
-            container.style.gap = '20px';
-            container.style.padding = '20px';
-            
-            images.forEach((img, index) => {
-                const card = document.createElement('div');
-                card.style.cssText = `
-                    background: white;
-                    border-radius: 10px;
-                    overflow: hidden;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                    transition: transform 0.3s;
-                `;
-                
-                card.onmouseover = () => { card.style.transform = 'scale(1.03)'; };
-                card.onmouseout = () => { card.style.transform = 'scale(1)'; };
-                
-                card.innerHTML = `
-                    <img src="${img.data}" alt="${img.caption || ''}" 
-                         style="width:100%; height:250px; object-fit:cover; display:block;">
-                    ${img.caption ? 
-                        `<div style="padding:15px; text-align:center; font-weight:500; background:#f8f9fa;">
-                            ${img.caption}
-                        </div>` : ''
-                    }
-                    <div style="padding:8px 15px; font-size:12px; color:#666; background:#f8f9fa; border-top:1px solid #eee;">
-                        🖼️ Image ${index + 1} of ${images.length} • ${img.date || ''}
-                    </div>
-                `;
-                
-                container.appendChild(card);
-            });
-        }
+        // Skip if still undefined
+        if (!imageUrl) return;
+        
+        const card = document.createElement('div');
+        card.style.cssText = `
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        `;
+        
+        card.onmouseover = () => { card.style.transform = 'scale(1.03)'; };
+        card.onmouseout = () => { card.style.transform = 'scale(1)'; };
+        
+        card.innerHTML = `
+            <img src="${imageUrl}" alt="${img.caption || ''}" 
+                 onerror="this.src='https://via.placeholder.com/300x200?text=Image+Error'"
+                 style="width:100%; height:250px; object-fit:cover; display:block;">
+            ${img.caption ? 
+                `<div style="padding:15px; text-align:center; font-weight:500; background:#f8f9fa;">
+                    ${img.caption}
+                </div>` : ''
+            }
+            <div style="padding:8px 15px; font-size:12px; color:#666; background:#f8f9fa; border-top:1px solid #eee;">
+                🖼️ Image ${index + 1} of ${validImages.length} • ${img.date || ''}
+            </div>
+        `;
+        
+        container.appendChild(card);
+    });
+}
         
         // Display admin list
+if (!images || images.length === 0) {
+    container.innerHTML = "<p>No images in gallery yet.</p>";
+    return;
+}
+
+// Filter out any images without valid data
+images = images.filter(img => img && (img.data || img.url));
         if (adminList) {
             adminList.innerHTML = "";
             adminList.style.display = 'grid';
@@ -322,7 +358,7 @@ async function loadGallery() {
         container.innerHTML = "<p style='text-align:center; color:#dc3545;'>Error loading gallery. Check console.</p>";
     }
 }
-
+\
 // Preview multiple images
 window.previewImages = function(event) {
     const files = Array.from(event.target.files);
@@ -704,3 +740,4 @@ document.addEventListener("DOMContentLoaded", function() {
     `;
     document.head.appendChild(style);
 });
+

@@ -1,23 +1,17 @@
-// ============ TEMPORARY: DISABLE PROTECTION FOR TESTING ============
-// Remove this after testing!
+// ============ COMPLETE WORKING CODE WITH YOUR ACTUAL CREDENTIALS ============
 
-// Remove all keyboard event listeners
-document.removeEventListener('keydown', function(){});
-document.removeEventListener('contextmenu', function(){});
-
-// Re-enable right click
-document.oncontextmenu = null;
-
-// Re-enable F12 and dev tools
-document.onkeydown = null;
-
-console.log('🔓 Protection disabled for testing');
 // ============ CONFIGURATION ============
-// REPLACE WITH YOUR ACTUAL VALUES
-const MASTER_KEY = '$2a$10$/73BHVkiHDdroKUGU7j2JuqgjESyGWvbXU3iU.piqoZTj4uUA4moi'; // Your master key
-const BIN_ID = '699881a243b1c97be98eaf4d'; // Your announcement bin ID
-const GALLERY_BIN_ID = '69a04e22ae596e708f4c3ca2'; // Your gallery bin ID
+// YOUR ACTUAL CREDENTIALS - DO NOT CHANGE THESE
+const MASTER_KEY = '$2a$10$/73BHVkiHDdrokUGU7j2JugqjESyGwvBx3Ui.piqoZT4uUA4moi';
+const BIN_ID = '699881a243b1c97be98eaf4d';
+const GALLERY_BIN_ID = '69a04e22ae596e708f4c3ca2';
 const ADMIN_PASSWORD = 'kojja emma';
+
+// CLOUDINARY CONFIGURATION - YOU NEED TO ADD YOUR ACTUAL CLOUDINARY VALUES HERE
+const CLOUDINARY_CONFIG = {
+    cloudName: 'YOUR_CLOUD_NAME', // ← YOU MUST REPLACE THIS with your Cloudinary cloud name
+    uploadPreset: 'YOUR_UPLOAD_PRESET' // ← YOU MUST REPLACE THIS with your Cloudinary upload preset
+};
 
 // ============ ANNOUNCEMENT FUNCTIONS ============
 
@@ -205,8 +199,8 @@ async function clearAnnouncements() {
     }
 }
 
-// ============ SIMPLE WORKING GALLERY ============
-let selectedImage = null;
+// ============ GALLERY FUNCTIONS WITH CLOUDINARY ============
+let selectedImages = [];
 
 // Load gallery
 async function loadGallery() {
@@ -216,7 +210,7 @@ async function loadGallery() {
     if (!container) return;
     
     try {
-        container.innerHTML = "<p>Loading gallery...</p>";
+        container.innerHTML = "<p style='text-align:center; color:#666;'>Loading gallery...</p>";
         
         const response = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
             headers: { 
@@ -236,293 +230,103 @@ async function loadGallery() {
         container.innerHTML = "";
         
         if (images.length === 0) {
-            container.innerHTML = "<p>No images in gallery yet.</p>";
+            container.innerHTML = "<p style='text-align:center; color:#666;'>No images in gallery yet.</p>";
         } else {
             container.style.display = 'grid';
-            container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))';
-            container.style.gap = '15px';
+            container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+            container.style.gap = '20px';
+            container.style.padding = '20px';
             
-            images.forEach(img => {
-                const div = document.createElement('div');
-                div.style.border = '1px solid #ddd';
-                div.style.borderRadius = '8px';
-                div.style.overflow = 'hidden';
-                
-                div.innerHTML = `
-                    <img src="${img.data}" style="width:100%; height:200px; object-fit:cover;">
-                    ${img.caption ? `<p style="padding:10px; margin:0;">${img.caption}</p>` : ''}
+            images.forEach((img, index) => {
+                const card = document.createElement('div');
+                card.style.cssText = `
+                    background: white;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    transition: transform 0.3s;
                 `;
-                container.appendChild(div);
+                
+                card.onmouseover = () => { card.style.transform = 'scale(1.03)'; };
+                card.onmouseout = () => { card.style.transform = 'scale(1)'; };
+                
+                let imageUrl = img.url || img.data;
+                
+                card.innerHTML = `
+                    <img src="${imageUrl}" alt="${img.caption || ''}" 
+                         style="width:100%; height:250px; object-fit:cover; display:block;">
+                    ${img.caption ? 
+                        `<div style="padding:15px; text-align:center; font-weight:500; background:#f8f9fa;">
+                            ${img.caption}
+                        </div>` : ''
+                    }
+                    <div style="padding:8px 15px; font-size:12px; color:#666; background:#f8f9fa; border-top:1px solid #eee;">
+                        🖼️ Image ${index + 1} of ${images.length} • ${img.date || ''}
+                    </div>
+                `;
+                
+                container.appendChild(card);
             });
         }
         
         // Display admin list
         if (adminList) {
             adminList.innerHTML = "";
+            adminList.style.display = 'grid';
+            adminList.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+            adminList.style.gap = '20px';
+            adminList.style.marginTop = '20px';
             
             if (images.length === 0) {
-                adminList.innerHTML = "<p>No images uploaded yet.</p>";
+                adminList.innerHTML = "<p style='text-align:center; color:#666;'>No images uploaded yet. Select multiple images below and click 'Upload All Images'.</p>";
             } else {
                 images.forEach((img, index) => {
-                    const div = document.createElement('div');
-                    div.style.marginBottom = '15px';
-                    div.style.padding = '10px';
-                    div.style.border = '1px solid #ddd';
-                    div.style.borderRadius = '5px';
-                    div.style.backgroundColor = '#f9f9f9';
-                    
-                    div.innerHTML = `
-                        <img src="${img.data}" style="width:100%; height:150px; object-fit:cover; border-radius:5px;">
-                        <p><strong>Image ${index + 1}</strong> ${img.caption || ''}</p>
-                        <p><small>${img.date || ''}</small></p>
-                        <button onclick="deleteImage(${index})" style="background:#dc3545; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer; width:100%;">Delete</button>
+                    const card = document.createElement('div');
+                    card.style.cssText = `
+                        background: white;
+                        border: 1px solid #e0e0e0;
+                        border-radius: 12px;
+                        padding: 15px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
                     `;
-                    adminList.appendChild(div);
+                    
+                    let imageUrl = img.url || img.data;
+                    
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <span style="background:#007bff; color:white; padding:5px 15px; border-radius:20px; font-size:14px; font-weight:bold;">
+                                Image #${index + 1}
+                            </span>
+                            <span style="color:#666; font-size:13px;">
+                                📅 ${img.date || 'No date'}
+                            </span>
+                        </div>
+                        
+                        <img src="${imageUrl}" style="width:100%; height:150px; object-fit:cover; border-radius:8px; margin-bottom:15px; border:1px solid #eee;">
+                        
+                        ${img.caption ? 
+                            `<div style="background:#f0f7ff; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #007bff;">
+                                <strong style="color:#007bff; display:block; margin-bottom:5px;">📝 Caption:</strong>
+                                ${img.caption}
+                            </div>` : 
+                            '<p style="color:#999; font-style:italic; margin-bottom:15px;">No caption</p>'
+                        }
+                        
+                        <button onclick="deleteImage(${index})" 
+                                style="background:#dc3545; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; width:100%; font-size:16px; font-weight:bold;">
+                            🗑️ Delete Image
+                        </button>
+                    `;
+                    
+                    adminList.appendChild(card);
                 });
             }
         }
         
     } catch (error) {
-        console.error('Error:', error);
-        container.innerHTML = "<p>Error loading gallery.</p>";
-    }
-}
-
-// Preview image
-window.previewImage = function(event) {
-    const file = event.target.files[0];
-    const preview = document.getElementById("imagePreview");
-    const uploadBtn = document.getElementById("uploadBtn");
-    
-    if (!file) return;
-    
-    if (file.size > 5 * 1024 * 1024) {
-        alert("❌ Image too large! Max 5MB");
-        return;
-    }
-    
-    selectedImage = file;
-    
-    const reader = new FileReader();
-    reader.onload = e => {
-        preview.innerHTML = `<img src="${e.target.result}" style="max-width:100%; max-height:200px; border:2px solid green;">`;
-    };
-    reader.readAsDataURL(file);
-    
-    uploadBtn.disabled = false;
-};
-
-// Add this function to compress images
-function compressImage(file, maxSize = 100 * 1024) { // 100KB max
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-            const img = new Image();
-            img.src = e.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                
-                // Calculate new dimensions (max 800px width)
-                const maxWidth = 800;
-                if (width > maxWidth) {
-                    height = (maxWidth * height) / width;
-                    width = maxWidth;
-                }
-                
-                canvas.width = width;
-                canvas.height = height;
-                
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                // Compress to JPEG at 70% quality
-                canvas.toBlob((blob) => {
-                    resolve(blob);
-                }, 'image/jpeg', 0.7);
-            };
-        };
-        reader.onerror = reject;
-    });
-}
-
-// Update your previewImage function
-window.previewImage = async function(event) {
-    const file = event.target.files[0];
-    const preview = document.getElementById("imagePreview");
-    const uploadBtn = document.getElementById("uploadBtn");
-    
-    if (!file) return;
-    
-    try {
-        // Compress the image
-        const compressedBlob = await compressImage(file);
-        selectedImage = compressedBlob;
-        
-        // Show preview
-        const reader = new FileReader();
-        reader.onload = e => {
-            preview.innerHTML = `<img src="${e.target.result}" style="max-width:100%; max-height:200px; border:2px solid green;"><p style="color:green;">✅ Image compressed successfully!</p>`;
-        };
-        reader.readAsDataURL(compressedBlob);
-        
-        uploadBtn.disabled = false;
-    } catch (error) {
-        alert("Error compressing image: " + error.message);
-    }
-};
-
-// Upload image
-// ============ CLOUDINARY GALLERY ============
-// Replace with your Cloudinary credentials
-const CLOUDINARY_CONFIG = {
-    cloudName: 'dIjtavfop', // Your cloud name from Cloudinary
-    uploadPreset: 'nakedlivebabes' // Your upload preset
-};
-
-let selectedImages = []; // Changed to array for multiple images
-
-// Load gallery
-async function loadGallery() {
-    const container = document.getElementById("gallery-container");
-    const adminList = document.getElementById("image-list");
-    
-    if (!container) return;
-    
-    try {
-        container.innerHTML = "<p>Loading gallery...</p>";
-        
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-            headers: { 
-                'X-Master-Key': MASTER_KEY,
-                'X-Bin-Meta': 'false'
-            }
-        });
-        
-        if (!response.ok) throw new Error('Failed to load');
-        
-        const data = await response.json();
-        const images = data.images || [];
-        
-        console.log("Gallery loaded:", images.length, "images");
-        
-        // Display public gallery
-        displayPublicGallery(images);
-        
-        // Display admin panel
-        if (adminList) {
-            displayAdminGallery(images);
-        }
-        
-    } catch (error) {
         console.error('Gallery error:', error);
-        container.innerHTML = "<p>Error loading gallery.</p>";
+        container.innerHTML = "<p style='text-align:center; color:#dc3545;'>Error loading gallery. Check console.</p>";
     }
-}
-
-// Display public gallery
-function displayPublicGallery(images) {
-    const container = document.getElementById("gallery-container");
-    if (!container) return;
-    
-    container.innerHTML = "";
-    
-    if (images.length === 0) {
-        container.innerHTML = "<p>No images in gallery yet.</p>";
-        return;
-    }
-    
-    container.style.display = 'grid';
-    container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
-    container.style.gap = '20px';
-    
-    images.forEach((img, index) => {
-        const card = document.createElement('div');
-        card.style.cssText = `
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        `;
-        
-        card.onmouseover = () => { card.style.transform = 'scale(1.03)'; };
-        card.onmouseout = () => { card.style.transform = 'scale(1)'; };
-        
-        card.innerHTML = `
-            <img src="${img.url}" alt="${img.caption || ''}" 
-                 style="width:100%; height:250px; object-fit:cover; display:block;">
-            ${img.caption ? 
-                `<div style="padding:15px; text-align:center; font-weight:500; background:#f8f9fa;">
-                    ${img.caption}
-                </div>` : ''
-            }
-            <div style="padding:8px 15px; font-size:12px; color:#666; background:#f8f9fa; border-top:1px solid #eee;">
-                🖼️ Image ${index + 1} of ${images.length} • ${img.date || ''}
-            </div>
-        `;
-        
-        container.appendChild(card);
-    });
-}
-
-// Display admin gallery
-function displayAdminGallery(images) {
-    const list = document.getElementById("image-list");
-    if (!list) return;
-    
-    list.innerHTML = "";
-    
-    if (images.length === 0) {
-        list.innerHTML = "<p>No images uploaded yet. Select multiple images below and click 'Upload All Images'.</p>";
-        return;
-    }
-    
-    // Create grid for admin view
-    list.style.display = 'grid';
-    list.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
-    list.style.gap = '20px';
-    
-    images.forEach((img, index) => {
-        const card = document.createElement('div');
-        card.style.cssText = `
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        `;
-        
-        card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <span style="background:#007bff; color:white; padding:5px 15px; border-radius:20px; font-size:14px; font-weight:bold;">
-                    Image #${index + 1}
-                </span>
-                <span style="color:#666; font-size:13px;">
-                    📅 ${img.date || 'No date'}
-                </span>
-            </div>
-            
-            <img src="${img.url}" style="width:100%; height:150px; object-fit:cover; border-radius:8px; margin-bottom:15px; border:1px solid #eee;">
-            
-            ${img.caption ? 
-                `<div style="background:#f0f7ff; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #007bff;">
-                    <strong style="color:#007bff; display:block; margin-bottom:5px;">📝 Caption:</strong>
-                    ${img.caption}
-                </div>` : 
-                '<p style="color:#999; font-style:italic; margin-bottom:15px;">No caption</p>'
-            }
-            
-            <button onclick="deleteImage(${index})" 
-                    style="background:#dc3545; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; width:100%; font-size:16px; font-weight:bold;">
-                🗑️ Delete Image
-            </button>
-        `;
-        
-        list.appendChild(card);
-    });
 }
 
 // Preview multiple images
@@ -565,7 +369,7 @@ window.previewImages = function(event) {
     uploadBtn.textContent = `📤 Upload ${files.length} Image(s)`;
 };
 
-// Upload multiple images to Cloudinary
+// Upload multiple images
 window.uploadImages = async function() {
     const password = document.getElementById("galleryAdminPass").value;
     const caption = document.getElementById("imageCaption").value;
@@ -598,38 +402,33 @@ window.uploadImages = async function() {
             }
         });
         
+        if (!getRes.ok) {
+            throw new Error('Failed to get current images from JSONBin');
+        }
+        
         const data = await getRes.json();
         let images = data.images || [];
         
-        // Upload each image to Cloudinary
+        // Upload each image
         for (let i = 0; i < selectedImages.length; i++) {
             uploadBtn.textContent = `⏳ Uploading ${i + 1}/${selectedImages.length}...`;
             
             const file = selectedImages[i];
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
             
-            // Upload to Cloudinary
-            const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`, {
-                method: 'POST',
-                body: formData
+            // Convert to base64
+            const reader = new FileReader();
+            const base64Promise = new Promise((resolve) => {
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(file);
             });
             
-            if (!cloudinaryRes.ok) {
-                throw new Error(`Failed to upload ${file.name}`);
-            }
-            
-            const cloudinaryData = await cloudinaryRes.json();
+            const base64Data = await base64Promise;
             
             // Add to images array
             images.unshift({
-                url: cloudinaryData.secure_url,
-                publicId: cloudinaryData.public_id,
+                data: base64Data,
                 caption: caption ? `${caption} #${images.length + 1}` : '',
-                date: new Date().toLocaleString(),
-                width: cloudinaryData.width,
-                height: cloudinaryData.height
+                date: new Date().toLocaleString()
             });
         }
         
@@ -724,42 +523,116 @@ window.deleteImage = async function(index) {
     }
 };
 
-// Simple test function
-window.testJSONBin = async function() {
-    const result = document.createElement('div');
-    result.style.cssText = 'position:fixed; top:50px; left:10px; background:white; border:2px solid black; padding:20px; z-index:10000; max-width:500px;';
-    
-    try {
-        // Test read
-        const readRes = await fetch(`https://api.jsonbin.io/v3/b/${GALLERY_BIN_ID}/latest`, {
-            headers: { 
-                'X-Master-Key': MASTER_KEY,
-                'X-Bin-Meta': 'false'
-            }
-        });
-        const readData = await readRes.json();
-        
-        result.innerHTML = `
-            <h3>✅ Test Results:</h3>
-            <p><strong>Read successful!</strong></p>
-            <p>Current images: ${readData.images ? readData.images.length : 0}</p>
-            <p>Bin ID: ${GALLERY_BIN_ID}</p>
-            <p>Master Key: ${MASTER_KEY.substring(0, 20)}...</p>
-            <button onclick="this.parentElement.remove()" style="margin-top:10px;">Close</button>
-        `;
-    } catch (error) {
-        result.innerHTML = `
-            <h3 style="color:red;">❌ Test Failed:</h3>
-            <p>${error.message}</p>
-            <p>Check your Bin ID and Master Key</p>
-            <button onclick="this.parentElement.remove()" style="margin-top:10px;">Close</button>
-        `;
+// ============ INITIALIZE ============
+document.addEventListener("DOMContentLoaded", function() {
+    // Load announcements if element exists
+    if (document.getElementById("announcement-list")) {
+        loadAnnouncements();
     }
     
-    document.body.appendChild(result);
-};
-
-
-
-
-
+    // Load gallery if element exists
+    if (document.getElementById("gallery-container")) {
+        loadGallery();
+    }
+    
+    // Add global styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .admin-panel {
+            background: #f8f9fa;
+            padding: 30px;
+            margin: 30px auto;
+            border-radius: 12px;
+            max-width: 800px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .admin-panel h2 {
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 28px;
+        }
+        
+        .admin-panel input,
+        .admin-panel textarea,
+        .admin-panel input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        .admin-panel input:focus,
+        .admin-panel textarea:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        
+        .admin-panel button {
+            padding: 12px 25px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background 0.3s;
+        }
+        
+        .admin-panel button:hover {
+            background: #0056b3;
+        }
+        
+        .admin-panel .clear-btn {
+            background: #dc3545;
+        }
+        
+        .admin-panel .clear-btn:hover {
+            background: #c82333;
+        }
+        
+        .image-upload-section {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 2px dashed #007bff;
+        }
+        
+        .image-upload-section h3 {
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        #imagePreview {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .current-images {
+            margin-top: 30px;
+        }
+        
+        .current-images h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        #galleryMessage {
+            margin-top: 20px;
+        }
+        
+        #gallery-container {
+            min-height: 200px;
+        }
+    `;
+    document.head.appendChild(style);
+});

@@ -9,8 +9,8 @@ const ADMIN_PASSWORD = 'kojja emma';
 
 // CLOUDINARY CONFIGURATION - YOU NEED TO ADD YOUR ACTUAL CLOUDINARY VALUES HERE
 const CLOUDINARY_CONFIG = {
-    cloudName: 'YOUR_CLOUD_NAME', // ← YOU MUST REPLACE THIS with your Cloudinary cloud name
-    uploadPreset: 'YOUR_UPLOAD_PRESET' // ← YOU MUST REPLACE THIS with your Cloudinary upload preset
+    cloudName: 'dljtavfop', // ← YOU MUST REPLACE THIS with your Cloudinary cloud name
+    uploadPreset: 'nakedlivebabes' // ← YOU MUST REPLACE THIS with your Cloudinary upload preset
 };
 
 // ============ ANNOUNCEMENT FUNCTIONS ============
@@ -636,3 +636,4 @@ document.addEventListener("DOMContentLoaded", function() {
     `;
     document.head.appendChild(style);
 });
+

@@ -2,7 +2,7 @@
 
 // ============ CONFIGURATION ============
 // YOUR ACTUAL CREDENTIALS - DO NOT CHANGE THESE
-const MASTER_KEY = '$2a$10$/73BHVkiHDdrokUGU7j2JugqjESyGwvBx3Ui.piqoZT4uUA4moi';
+const MASTER_KEY = '$2a$10$/73BHVkiHDdroKUGU7j2JuqgjESyGWvbXU3iU.piqoZTj4uUA4moi';
 const BIN_ID = '699881a243b1c97be98eaf4d';
 const GALLERY_BIN_ID = '69a04e22ae596e708f4c3ca2';
 const ADMIN_PASSWORD = 'kojja emma';
@@ -636,4 +636,5 @@ document.addEventListener("DOMContentLoaded", function() {
     `;
     document.head.appendChild(style);
 });
+
 
